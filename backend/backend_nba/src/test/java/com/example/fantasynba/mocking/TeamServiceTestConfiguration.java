@@ -1,5 +1,6 @@
 package com.example.fantasynba.mocking;
 
+import com.example.fantasynba.service.PlayerServiceImpl;
 import com.example.fantasynba.service.TeamServiceImpl;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
@@ -16,4 +17,8 @@ public class TeamServiceTestConfiguration {
     public TeamServiceImpl teamService(){
         return Mockito.mock(TeamServiceImpl.class);
     }
+
+    @Bean
+    @Primary
+    public PlayerServiceImpl playerService() {return Mockito.mock(PlayerServiceImpl.class);}
 }

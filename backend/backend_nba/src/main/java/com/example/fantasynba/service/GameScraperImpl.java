@@ -79,11 +79,6 @@ public class GameScraperImpl implements GameScraper {
     }
 
     @Override
-    public List<Game> getAllGames() {
-        return gameRepo.findAll();
-    }
-
-    @Override
     @Transactional
     @Async
     public void createGame(Element e) throws ExecutionException, InterruptedException {
@@ -108,6 +103,7 @@ public class GameScraperImpl implements GameScraper {
                 .date(date)
                 .overtime(overtime)
                 .build();
+
         gameRepo.save(gameService.saveNewGame(gr).get());
 
     }
@@ -117,6 +113,8 @@ public class GameScraperImpl implements GameScraper {
         return StringUtils.isEmpty(s) ? 0 : Integer.parseInt(s.replaceAll(",", ""));
     }
 
-
-
+    @Override
+    public List<Game> getAllGames() {
+        return gameRepo.findAll();
+    }
 }

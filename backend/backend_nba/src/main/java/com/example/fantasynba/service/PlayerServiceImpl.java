@@ -124,9 +124,16 @@ public class PlayerServiceImpl implements PlayerService {
                 .team(player_team)
                 .build();
 
+        Player newPlayer = playerRepository.findByName(name);
 
-        playerRepository.save(p);
-        teamRepository.findByName(team).addPlayer(p);
+        if (newPlayer == null){
+            playerRepository.save(p);
+            teamRepository.findByName(team).addPlayer(p);
+        } else if (!newPlayer.equals(p)){
+            playerRepository.save(p);
+            teamRepository.findByName(team).addPlayer(p);
+        }
+
     }
 
     @Override
