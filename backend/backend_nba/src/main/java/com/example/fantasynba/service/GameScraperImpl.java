@@ -1,5 +1,6 @@
 package com.example.fantasynba.service;
 
+import com.example.fantasynba.domain.Game;
 import com.example.fantasynba.domain.GameRequest;
 import com.example.fantasynba.domain.Team;
 import com.example.fantasynba.repository.GameRepository;
@@ -18,7 +19,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 
 import java.util.*;
-
+import java.util.concurrent.ExecutionException;
 
 
 @Service
@@ -53,13 +54,18 @@ public class GameScraperImpl implements GameScraper {
 
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
 
     }
 
     @Override
-    public void gameDataExtraction(List<String> links) throws IOException {
+    @Async
+    public void gameDataExtraction(List<String> links) throws IOException, ExecutionException, InterruptedException {
         for (String s : links){
             Document doc = Jsoup.connect(s).get();
             Element table = doc.getElementById("schedule");
@@ -72,15 +78,15 @@ public class GameScraperImpl implements GameScraper {
         }
     }
 
-
     @Override
-    public Integer stringToInt(String s)  {
-        return StringUtils.isEmpty(s) ? 0 : Integer.parseInt(s.replaceAll(",", ""));
+    public List<Game> getAllGames() {
+        return gameRepo.findAll();
     }
 
     @Override
     @Transactional
-    public void createGame(Element e)  {
+    @Async
+    public void createGame(Element e) throws ExecutionException, InterruptedException {
 
         LocalDate date = dateService.getDateFromString(e.select("[data-stat=date_game]").text());
         String time = e.select("[data-stat=game_start_time]").text();
@@ -102,8 +108,13 @@ public class GameScraperImpl implements GameScraper {
                 .date(date)
                 .overtime(overtime)
                 .build();
-        gameRepo.save(gameService.saveNewGame(gr));
+        gameRepo.save(gameService.saveNewGame(gr).get());
 
+    }
+
+    @Override
+    public Integer stringToInt(String s)  {
+        return StringUtils.isEmpty(s) ? 0 : Integer.parseInt(s.replaceAll(",", ""));
     }
 
 

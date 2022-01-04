@@ -23,31 +23,13 @@ import java.util.List;
 public class TeamController {
 
     private final TeamService teamService;
-    private final PlayerRepository playerRepository;
     private final PlayerService playerService;
 
-    @GetMapping("")
-    @Async
-    public ResponseEntity<List<Team>> getStandings(){
-        teamService.nbaStandings();
-        List<Team> teams = teamService.getAllTeams();
-        return new ResponseEntity<>(teams, HttpStatus.OK);
-    }
+
 
     @GetMapping("/{team}")
     public ResponseEntity<Team> getTeam(@PathVariable String team){
         return new ResponseEntity<>(teamService.findTeam(team), HttpStatus.OK);
-    }
-
-    @GetMapping("/{team}/games")
-    public ResponseEntity<List<Game>> getTeamGames(@PathVariable String team){
-        List<Game> games = teamService.getTeamGames(team);
-        return new ResponseEntity<>(games, HttpStatus.OK);
-    }
-    @GetMapping("/players")
-    public ResponseEntity<List<Player>> getPlayers() throws IOException {
-        playerService.fetchActivePlayers();
-        return new ResponseEntity<>(playerService.getAllPlayers(), HttpStatus.OK);
     }
 
     @GetMapping("/players/{name}")

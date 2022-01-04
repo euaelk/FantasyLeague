@@ -1,18 +1,22 @@
 package com.example.fantasynba.service;
 
+import com.example.fantasynba.domain.Game;
 import org.jsoup.nodes.Element;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public interface GameScraper {
 
-    public void fetchGameData(String url);
+    void fetchGameData(String url);
 
-    public Integer stringToInt(String s);
+    Integer stringToInt(String s);
 
-    public void createGame(Element e);
+    void createGame(Element e) throws ExecutionException, InterruptedException;
 
-    public void gameDataExtraction(List<String> links) throws IOException;
+    void gameDataExtraction(List<String> links) throws IOException, ExecutionException, InterruptedException;
+
+    List<Game> getAllGames();
 }
