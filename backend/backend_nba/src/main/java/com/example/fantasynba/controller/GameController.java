@@ -34,10 +34,20 @@ public class GameController {
     @GetMapping("")
     public ResponseEntity<List<Game>> getSeasonSchedule() throws IOException {
         gameScraper.fetchGameData(url);
-        teamService.nbaStandings();
-        playerService.fetchActivePlayers();
         List<Game> retrievedGames = gameScraper.getAllGames();
         return new ResponseEntity<>(retrievedGames, HttpStatus.OK);
+    }
+
+    @GetMapping("/team")
+    public ResponseEntity<List<Team>> getNBATeams() throws IOException {
+        teamService.nbaStandings();
+        return new ResponseEntity<>(teamService.getAllTeams(), HttpStatus.OK);
+    }
+
+    @GetMapping("/player")
+    public ResponseEntity<List<Player>> getNBAPlayers() throws IOException {
+        playerService.fetchActivePlayers();
+        return new ResponseEntity<>(playerService.getAllPlayers(), HttpStatus.OK);
     }
 
     @GetMapping("/games")
