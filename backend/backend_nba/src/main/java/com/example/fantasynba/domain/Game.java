@@ -5,8 +5,6 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.util.Objects;
-
 
 @Entity
 @Getter
@@ -60,14 +58,13 @@ public class Game {
         // if (this == o) return true;
         if (!(o instanceof Game)) return false;
         Game game = (Game) o;
-        return this.date.equals(game.date) && this.visitor_name.equals(game.visitor_name)
-                && this.home_name.equals(game.home_name);
+        return this.date.isEqual(game.date) && this.visitor.equals(game.visitor)
+                && this.home.equals(game.home);
     }
 
     @Override
     public int hashCode() {
         int hashCode = 1;
-
         hashCode = hashCode * 37 + this.date.hashCode();
         hashCode = hashCode * 37 + this.time.hashCode();
         hashCode = hashCode * 37 + this.visitor.hashCode();
@@ -76,8 +73,6 @@ public class Game {
         hashCode = hashCode * 37 + this.home.hashCode();
         hashCode = hashCode * 37 + this.overtime.hashCode();
         hashCode = hashCode * 37 + this.attendance.hashCode();
-        hashCode = hashCode * 37 + this.visitor_name.hashCode();
-        hashCode = hashCode * 37 + this.home_name.hashCode();
 
         return hashCode;
 

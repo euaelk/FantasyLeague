@@ -1,7 +1,6 @@
 package com.example.fantasynba.service;
 
 import com.example.fantasynba.domain.Game;
-import com.example.fantasynba.domain.GameRequest;
 import com.example.fantasynba.domain.Team;
 import com.example.fantasynba.repository.GameRepository;
 import com.example.fantasynba.repository.TeamRepository;
@@ -10,15 +9,19 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
 
+import javax.print.Doc;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.LocalDate;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 
@@ -28,17 +31,19 @@ public class GameScraperImpl implements GameScraper {
 
 
     private final GameService gameService;
-    private final GameRepository gameRepo;
+    private final GameRepository gameRepository;
     private final DateService dateService;
     private final TeamRepository teamRepository;
+    private static final Logger logger = LoggerFactory.getLogger(GameScraperImpl.class);
 
-    @Async
-    public void fetchGameData(String reference_url)  {
+    @Override
+    public void fetchGameData(String reference_url) throws ExecutionException, InterruptedException {
         Map<String, String> urls = new HashMap<>();
+        Document doc = null;
 
         try {
             String baseUri = "https://www.basketball-reference.com";
-            Document doc = Jsoup.connect(reference_url).get();
+            doc = Jsoup.connect(reference_url).get();
 
             Element months = doc.getElementsByClass("filter").first();
             Elements links = months.getElementsByTag("a");
@@ -50,38 +55,31 @@ public class GameScraperImpl implements GameScraper {
             }
             List<String> monthLinks = new ArrayList<>(urls.values());
 
-            gameDataExtraction(monthLinks);
+            for (String s : monthLinks){
+
+                doc = Jsoup.connect(s).get();
+
+                Element table = doc.getElementById("schedule");
+                Iterator<Element> row = table.select("tr").iterator();
+                row.next(); // skip <th>
+
+                while (row.hasNext()){
+                    Iterator<Element> game = row.next().getAllElements().iterator();
+                    gameDataFromHtml(game.next());
+                }
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
-
 
     }
 
-    @Override
-    @Async
-    public void gameDataExtraction(List<String> links) throws IOException, ExecutionException, InterruptedException {
-        for (String s : links){
-            Document doc = Jsoup.connect(s).get();
-            Element table = doc.getElementById("schedule");
-            Iterator<Element> row = table.select("tr").iterator();
-            row.next(); // skip <th>
-            while (row.hasNext()){
-                Iterator<Element> game = row.next().getAllElements().iterator();
-                createGame(game.next());
-            }
-        }
-    }
 
     @Override
     @Transactional
     @Async
-    public void createGame(Element e) throws ExecutionException, InterruptedException {
+    public void gameDataFromHtml(Element e) throws ExecutionException, InterruptedException {
 
         LocalDate date = dateService.getDateFromString(e.select("[data-stat=date_game]").text());
         String time = e.select("[data-stat=game_start_time]").text();
@@ -93,19 +91,37 @@ public class GameScraperImpl implements GameScraper {
         Team visitor = teamRepository.findByName(e.select("[data-stat=visitor_team_name]").text());
         Team home = teamRepository.findByName(e.select("[data-stat=home_team_name]").text());
 
-        GameRequest gr = GameRequest.builder()
+        CompletableFuture<Game> asyncGame = createGame(date, time, hPts, overtime, attendance, vPts, visitor, home);
+        Game game_duplicate = findGame(date, visitor, home);
+
+        if (game_duplicate == null)
+            gameRepository.save(asyncGame.get());
+        else if (!(game_duplicate.equals(asyncGame)))
+            gameRepository.save(asyncGame.get());
+
+    }
+
+    @Override
+    @Async
+    public CompletableFuture<Game> createGame(LocalDate date, String time, Integer hPts,
+                                              String overtime, Integer attendance, Integer vPts,
+                                              Team visitor, Team home) {
+        logger.info("Creating game");
+
+        Game g = Game.builder()
                 .vPts(vPts)
                 .hPts(hPts)
                 .attendance(attendance)
                 .visitor(visitor)
+                .visitor_name(visitor.getName())
                 .home(home)
+                .home_name(home.getName())
                 .time(time)
                 .date(date)
                 .overtime(overtime)
                 .build();
 
-        gameRepo.save(gameService.saveNewGame(gr).get());
-
+                return CompletableFuture.completedFuture(g);
     }
 
     @Override
@@ -115,6 +131,11 @@ public class GameScraperImpl implements GameScraper {
 
     @Override
     public List<Game> getAllGames() {
-        return gameRepo.findAll();
+        return gameRepository.findAll();
+    }
+
+    @Override
+    public Game findGame(LocalDate date, Team visitor, Team home){
+        return gameRepository.findByDateAndTeams(date, visitor.getName(), home.getName());
     }
 }

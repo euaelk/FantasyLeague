@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @CrossOrigin(origins = "http://localhost:8090")
 @RestController
@@ -32,7 +33,7 @@ public class GameController {
     public String url = "https://www.basketball-reference.com/leagues/NBA_2022_games.html";
 
     @GetMapping("")
-    public ResponseEntity<List<Game>> getSeasonSchedule() throws IOException {
+    public ResponseEntity<List<Game>> getSeasonSchedule() throws ExecutionException, InterruptedException {
         gameScraper.fetchGameData(url);
         List<Game> retrievedGames = gameScraper.getAllGames();
         return new ResponseEntity<>(retrievedGames, HttpStatus.OK);

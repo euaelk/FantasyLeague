@@ -56,14 +56,21 @@ public class TeamServiceImpl implements TeamService{
     @Override
     @Transactional
     public void teamStanding(Element team) {
-        teamRepository.save(Team.builder()
+        Team t = Team.builder()
                 .name(team.select("[data-stat=team_name]").select("a").text())
                 .wins(Integer.valueOf(team.select("[data-stat=wins]").text()))
                 .losses(Integer.valueOf(team.select("[data-stat=losses]").text()))
                 .winLossPer(Double.parseDouble(team.select("[data-stat=win_loss_pct]").text()))
                 .scoreAvg(Double.parseDouble(team.select("[data-stat=pts_per_g]").text()))
                 .oppScoreAvg(Double.parseDouble(team.select("[data-stat=opp_pts_per_g]").text()))
-                .build());
+                .build();
+
+        Team dupl_team = findTeam(t.getName());
+        
+        if (dupl_team == null)
+            teamRepository.save(t);
+        else if (!(dupl_team.equals(t)))
+            teamRepository.save(t);
     }
 
     @Override
