@@ -15,7 +15,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
 
-import javax.print.Doc;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -30,7 +29,6 @@ import java.util.concurrent.ExecutionException;
 public class GameScraperImpl implements GameScraper {
 
 
-    private final GameService gameService;
     private final GameRepository gameRepository;
     private final DateService dateService;
     private final TeamRepository teamRepository;
@@ -39,14 +37,14 @@ public class GameScraperImpl implements GameScraper {
     @Override
     public void fetchGameData(String reference_url) throws ExecutionException, InterruptedException {
         Map<String, String> urls = new HashMap<>();
-        Document doc = null;
+        Document doc;
 
         try {
             String baseUri = "https://www.basketball-reference.com";
             doc = Jsoup.connect(reference_url).get();
 
             Element months = doc.getElementsByClass("filter").first();
-            Elements links = months.getElementsByTag("a");
+            Elements links = months != null ? months.getElementsByTag("a") : null;
 
             for (Element link : links){
                 String linkHref = link.attr("href");
@@ -60,7 +58,7 @@ public class GameScraperImpl implements GameScraper {
                 doc = Jsoup.connect(s).get();
 
                 Element table = doc.getElementById("schedule");
-                Iterator<Element> row = table.select("tr").iterator();
+                Iterator<Element> row = table != null ? table.select("tr").iterator() : null;
                 row.next(); // skip <th>
 
                 while (row.hasNext()){
@@ -96,7 +94,7 @@ public class GameScraperImpl implements GameScraper {
 
         if (game_duplicate == null)
             gameRepository.save(asyncGame.get());
-        else if (!(game_duplicate.equals(asyncGame)))
+        else if (!(game_duplicate.equals(asyncGame.get())))
             gameRepository.save(asyncGame.get());
 
     }
