@@ -56,6 +56,28 @@ public class Team {
     }
 
     @Override
+    public boolean equals(Object o){
+        if (this == o) return true;
+        if (!(o instanceof Team)) return false;
+        Team team = (Team) o;
+        return this.name.equals(team.name) && this.wins.equals(team.wins)
+                && this.losses.equals(team.losses) && this.winLossPer.equals(team.winLossPer)
+                && this.scoreAvg.equals(team.scoreAvg) && this.oppScoreAvg.equals(team.oppScoreAvg);
+    }
+
+    @Override
+    public int hashCode() {
+        int hashCode = 1;
+        hashCode = hashCode * 37 + this.name.hashCode();
+        hashCode = hashCode * 37 + this.wins.hashCode();
+        hashCode = hashCode * 37 + this.losses.hashCode();
+        hashCode = hashCode * 37 + this.winLossPer.hashCode();
+        hashCode = hashCode * 37 + this.scoreAvg.hashCode();
+        hashCode = hashCode * 37 + this.oppScoreAvg.hashCode();
+        return hashCode;
+    }
+
+    @Override
     public String toString(){
         return "Team [id = " + id + ", name = " + name + " ]";
     }

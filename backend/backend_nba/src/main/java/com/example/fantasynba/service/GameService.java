@@ -6,6 +6,7 @@ import com.example.fantasynba.domain.GameRequest;
 import java.util.concurrent.Future;
 
 public interface GameService {
+
     Future<Game> saveNewGame(GameRequest game);
 
 }
