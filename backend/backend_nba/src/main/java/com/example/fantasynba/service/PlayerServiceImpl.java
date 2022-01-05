@@ -8,11 +8,14 @@ import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
@@ -60,7 +63,7 @@ public class PlayerServiceImpl implements PlayerService {
 
 
     @Override
-    public void fetchActivePlayers() {
+    public void fetchActivePlayers()  {
         teamLinks = new HashMap<>();
         String pre = "https://www.basketball-reference.com/teams/";
         String year = "/2022.html";
@@ -83,27 +86,30 @@ public class PlayerServiceImpl implements PlayerService {
 
         teamLinks.forEach((name, link) -> {
 
-            Document doc = null;
+            Document doc;
             try {
                 doc = Jsoup.connect(link).get();
-            } catch (IOException e) {
+                Element table = doc.getElementById("roster");
+
+                Element table_body = table != null ? table.select("tbody").first() : null;
+
+                for (Element element : table_body.select("tr")) {
+                    Iterator<Element> playerInfo = element.getAllElements().iterator();
+                    savePlayer(name, playerInfo.next());
+
+                }
+            } catch (IOException | ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
-            Element table = doc.getElementById("roster");
-            Element table_body = table.select("tbody").first();
 
-            Iterator<Element> tr_iterator = table_body.select("tr").iterator();
-            while (tr_iterator.hasNext()) {
-                Iterator<Element> playerInfo = tr_iterator.next().getAllElements().iterator();
-                savePlayer(name, playerInfo.next());
-            }
         });
 
     }
 
     @Override
     @Transactional
-    public void savePlayer(String team, Element e) {
+    @Async
+    public void savePlayer(String team, Element e) throws ExecutionException, InterruptedException {
 
         String name = e.select("[data-stat=player]").text();
         String position = e.select("[data-stat=pos]").text();
@@ -114,16 +120,7 @@ public class PlayerServiceImpl implements PlayerService {
         String college = e.select("[data-stat=college]").text();
         Team player_team = teamRepository.findByName(team);
 
-        Player p = Player.builder()
-                .name(name)
-                .position(position)
-                .height(height)
-                .weight(lbs)
-                .dob(dob)
-                .college(college)
-                .team(player_team)
-                .build();
-
+        Player p = asyncPlayer(name,position,height,lbs,dob,college,player_team).get();
         Player newPlayer = playerRepository.findByName(name);
 
         if (newPlayer == null){
@@ -134,6 +131,22 @@ public class PlayerServiceImpl implements PlayerService {
             teamRepository.findByName(team).addPlayer(p);
         }
 
+    }
+
+    @Override
+    @Async
+    public CompletableFuture<Player> asyncPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team) {
+        Player p = Player.builder()
+                .name(name)
+                .position(position)
+                .height(height)
+                .weight(lbs)
+                .dob(dob)
+                .college(college)
+                .team(team)
+                .build();
+
+        return CompletableFuture.completedFuture(p);
     }
 
     @Override
@@ -148,11 +161,11 @@ public class PlayerServiceImpl implements PlayerService {
 
     @Override
     public Integer returnInt(String s) {
-        Integer weight;
-        if (s.isEmpty() || s == null)
+        int weight;
+        if (s.isEmpty())
             return -1;
         try {
-            weight = Integer.valueOf(s);
+            weight = Integer.parseInt(s);
         } catch (NumberFormatException err) {
             throw new RuntimeException(err);
         }

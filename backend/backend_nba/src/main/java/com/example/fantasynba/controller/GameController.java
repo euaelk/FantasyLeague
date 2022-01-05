@@ -46,7 +46,7 @@ public class GameController {
     }
 
     @GetMapping("/player")
-    public ResponseEntity<List<Player>> getNBAPlayers() throws IOException {
+    public ResponseEntity<List<Player>> getNBAPlayers() throws IOException, ExecutionException, InterruptedException {
         playerService.fetchActivePlayers();
         return new ResponseEntity<>(playerService.getAllPlayers(), HttpStatus.OK);
     }
