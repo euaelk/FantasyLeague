@@ -3,8 +3,11 @@ package com.example.fantasynba.controller;
 
 import com.example.fantasynba.domain.Game;
 import com.example.fantasynba.domain.Player;
+import com.example.fantasynba.domain.PlayerStats;
 import com.example.fantasynba.domain.Team;
 import com.example.fantasynba.repository.GameRepository;
+import com.example.fantasynba.repository.StatsRepository;
+import com.example.fantasynba.scraping.Scraping;
 import com.example.fantasynba.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,6 +32,8 @@ public class GameController {
     private final DateService dateService;
     private final PlayerService playerService;
     private final TeamService teamService;
+    private final StatsRepository statsRepository;
+    private final Scraping statScraper;
 
     public String url = "https://www.basketball-reference.com/leagues/NBA_2022_games.html";
 
@@ -73,6 +78,12 @@ public class GameController {
     @GetMapping("/player/{name}")
     public ResponseEntity<Player> getPlayer(@PathVariable String name){
         return new ResponseEntity<>(playerService.findPlayer(name), HttpStatus.OK);
+    }
+
+    @GetMapping("/player/stats")
+    public ResponseEntity<List<PlayerStats>> getAllStatistics(){
+        statScraper.get_data_from_boxScores();
+        return new ResponseEntity<>(statsRepository.findAll(), HttpStatus.OK);
     }
 
 }
