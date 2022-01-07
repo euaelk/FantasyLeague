@@ -1,44 +1,68 @@
 package com.example.fantasynba.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import lombok.*;
 
+import javax.persistence.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Data
+@Entity
 @Builder
+@Getter
+@Setter
 @AllArgsConstructor
-public class PlayerStats {
+@NoArgsConstructor
+@IdClass(TraditionalStats.class)
+public class PlayerStats implements Serializable {
 
-    private LocalDate localDate;
-    private String minutes;
+    @Id
+    private String playerName;
+
+    @Id
+    private LocalDate date;
+
     private Integer fg;
     private Integer fga;
-    private BigDecimal fgPer;
     private Integer threeP; // 3P
-    private Integer threeA; // 3PA
-    private BigDecimal threePer;
-    private Integer ft;
-    private Integer fta;
-    private BigDecimal ftp;
-    private Integer orb; // offensive reb
-    private Integer drb; // def reb
     private Integer trb; // total reb
     private Integer ast;
     private Integer stl;
     private Integer blk;
     private Integer tov; // turnovers
-    private Integer pf; // personal fouls
     private Integer pts;
-    private Integer plusMinus;
 
+    @ManyToOne
+    @JoinColumn(name = "player_id")
+    @JsonBackReference
+    private Player player;
 
+    private Long id;
 
+    public PlayerStats(LocalDate date, Player player){
+        this.playerName = player.getName();
+        this.date = date;
+    }
 
+    public PlayerStats(LocalDate date, Integer fg, Integer fga, Integer threeP, Integer trb, Integer ast, Integer stl, Integer blk, Integer tov, Integer pts, Player player) {
+        this.date = date;
+        this.fg = fg;
+        this.fga = fga;
+        this.threeP = threeP;
+        this.trb = trb;
+        this.ast = ast;
+        this.stl = stl;
+        this.blk = blk;
+        this.tov = tov;
+        this.pts = pts;
+        this.player = player;
+        this.playerName = player.getName();
+        this.id = player.getId();
+    }
 
-
-
-
+    public Double fantasyPoints(){
+        return (this.pts * 1) + (this.trb * 1.2) + (this.ast * 1.5) + (this.stl * 3) + (this.blk * 3) - (this.tov * 1)
+                -(this.fga * .5) + (this.threeP * 2) + (this.fg * 1);
+    }
 }

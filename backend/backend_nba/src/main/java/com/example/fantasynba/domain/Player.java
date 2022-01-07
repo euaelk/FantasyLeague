@@ -1,10 +1,12 @@
 package com.example.fantasynba.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 
 import javax.persistence.*;
 import java.util.Objects;
+import java.util.Set;
 
 
 @Entity
@@ -17,7 +19,7 @@ public class Player {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", unique = true, nullable = false)
+    @Column(name = "player_id", unique = true, nullable = false)
     private Long id;
     private String name;
     private String position;
@@ -30,6 +32,12 @@ public class Player {
     @JoinColumn(name = "team_id")
     @JsonBackReference
     private Team team;
+
+    @OneToMany(mappedBy = "player", cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
+    @Column(nullable = true)
+    @JsonManagedReference
+    private Set<PlayerStats> stats; // mappedBy targets team field in Players class
+
 
 
     public Player(String name, String position, String height, Integer weight, String dob, String college, Team team) {
@@ -70,4 +78,6 @@ public class Player {
         hashCode = hashCode * 37 + this.team.hashCode();
         return hashCode;
     }
+
+    public void recordPlayerStat(PlayerStats s){this.stats.add(s);}
 }
