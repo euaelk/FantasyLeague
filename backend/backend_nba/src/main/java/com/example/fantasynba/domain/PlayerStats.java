@@ -38,7 +38,7 @@ public class PlayerStats implements Serializable {
     @JsonBackReference
     private Player player;
 
-    private Long id;
+
 
     public PlayerStats(LocalDate date, Player player){
         this.playerName = player.getName();
@@ -58,11 +58,28 @@ public class PlayerStats implements Serializable {
         this.pts = pts;
         this.player = player;
         this.playerName = player.getName();
-        this.id = player.getId();
     }
+
+
 
     public Double fantasyPoints(){
         return (this.pts * 1) + (this.trb * 1.2) + (this.ast * 1.5) + (this.stl * 3) + (this.blk * 3) - (this.tov * 1)
                 -(this.fga * .5) + (this.threeP * 2) + (this.fg * 1);
+    }
+
+    @Override
+    public String toString() {
+        return "PlayerStats{" +
+                " date=" + date +
+                ", fg=" + fg +
+                ", fga=" + fga +
+                ", threeP=" + threeP +
+                ", trb=" + trb +
+                ", ast=" + ast +
+                ", stl=" + stl +
+                ", blk=" + blk +
+                ", tov=" + tov +
+                ", pts=" + pts +
+                '}';
     }
 }

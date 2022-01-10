@@ -36,7 +36,7 @@ public class Player {
     @OneToMany(mappedBy = "player", cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     @Column(nullable = true)
     @JsonManagedReference
-    private Set<PlayerStats> stats; // mappedBy targets team field in Players class
+    private Set<PlayerStats> stats; // mappedBy targets player field in PlayerStats class
 
 
 

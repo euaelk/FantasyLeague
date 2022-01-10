@@ -27,7 +27,8 @@ public class PlayerServiceImpl implements PlayerService {
 
     public static Map<String, String> teamAbrev;
 
-    static {
+    @Override
+    public Map<String, String> setTeamNames(){
         teamAbrev = new HashMap<>();
         teamAbrev.put("Atlanta Hawks", "ATL");
         teamAbrev.put("Boston Celtics", "BOS");
@@ -59,12 +60,14 @@ public class PlayerServiceImpl implements PlayerService {
         teamAbrev.put("Toronto Raptors", "TOR");
         teamAbrev.put("Utah Jazz", "UTA");
         teamAbrev.put("Washington Wizards", "WAS");
+        return teamAbrev;
     }
 
 
     @Override
     public void fetchActivePlayers()  {
         teamLinks = new HashMap<>();
+        teamAbrev = setTeamNames();
         String pre = "https://www.basketball-reference.com/teams/";
         String year = "/2022.html";
 
