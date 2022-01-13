@@ -3,16 +3,13 @@ package com.example.fantasynba.service;
 import com.example.fantasynba.domain.Player;
 import com.example.fantasynba.domain.Team;
 import com.example.fantasynba.repository.PlayerRepository;
-import com.example.fantasynba.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.orm.jpa.JpaTransactionManager;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -20,10 +17,9 @@ import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
