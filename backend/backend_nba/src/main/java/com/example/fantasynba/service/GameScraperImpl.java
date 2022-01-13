@@ -76,7 +76,7 @@ public class GameScraperImpl implements GameScraper {
 
     @Override
     @Transactional
-    @Async
+    @Async("threadPoolForGames")
     public void gameDataFromHtml(Element e) throws ExecutionException, InterruptedException {
 
         LocalDate date = dateService.getDateFromString(e.select("[data-stat=date_game]").text());
