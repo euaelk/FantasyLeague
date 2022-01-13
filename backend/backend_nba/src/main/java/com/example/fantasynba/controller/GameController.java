@@ -12,6 +12,8 @@ import com.example.fantasynba.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -25,6 +27,7 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @RequestMapping("/v1")
 @RequiredArgsConstructor
+@EnableAsync
 public class GameController {
 
     private final GameRepository gameRepository;
@@ -73,6 +76,11 @@ public class GameController {
     @GetMapping("/team/{team}")
     public ResponseEntity<Team> getTeam(@PathVariable String team){
         return new ResponseEntity<>(teamService.findTeam(team), HttpStatus.OK);
+    }
+
+    @GetMapping("/team/{team}/games")
+    public ResponseEntity<List<Game>> getTeamGames(@PathVariable String team){
+        return new ResponseEntity<>(teamService.getTeamGames(team), HttpStatus.OK);
     }
 
     @GetMapping("/player/{name}")

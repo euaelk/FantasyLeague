@@ -14,10 +14,10 @@ import java.util.concurrent.ExecutionException;
 public interface PlayerService {
     void fetchActivePlayers() throws IOException;
     void fetchPlayers() throws IOException;
-    void savePlayer(String team, Element e) throws ExecutionException, InterruptedException;
-    CompletableFuture<Player> asyncPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team);
+    //void savePlayer(String team, Element e) throws ExecutionException, InterruptedException;
+    //CompletableFuture<Player> asyncPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team);
     List<Player> getAllPlayers();
     Player findPlayer(String name);
     Integer returnInt(String s);
-    Map<String, String> setTeamNames();
+    //Map<String, String> setTeamNames();
 }

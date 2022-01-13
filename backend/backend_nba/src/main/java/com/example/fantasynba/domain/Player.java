@@ -29,7 +29,7 @@ public class Player {
     private String college;
 
     @ManyToOne
-    @JoinColumn(name = "team_id")
+    @JoinColumn(name = "team_fk", referencedColumnName = "team_id")
     @JsonBackReference
     private Team team;
 
@@ -38,7 +38,14 @@ public class Player {
     @JsonManagedReference
     private Set<PlayerStats> stats; // mappedBy targets player field in PlayerStats class
 
-
+    public Player(String name, String position, String height, Integer weight, String dob, String college) {
+        this.name = name;
+        this.position = position;
+        this.height = height;
+        this.weight = weight;
+        this.dob = dob;
+        this.college = college;
+    }
 
     public Player(String name, String position, String height, Integer weight, String dob, String college, Team team) {
         this.name = name;

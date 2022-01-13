@@ -42,8 +42,13 @@ public class Team {
     @JsonManagedReference
     private Set<Game> homeGames; // mappedBy -> home field in Game class
 
+
     public String getRecord(){
         return this.getWins() + " W | " + this.getLosses() + " L ";
+    }
+
+    public Team(String name){
+        this.name = name;
     }
 
     public Team(String name, Integer wins, Integer losses, Double winLossPer, Double scoreAvg, Double oppScoreAvg) {
@@ -85,6 +90,7 @@ public class Team {
     public void addPlayer(Player p){
         this.players.add(p);
     }
+
 
 
 }

@@ -6,12 +6,14 @@ import com.example.fantasynba.repository.PlayerRepository;
 import com.example.fantasynba.repository.StatsRepository;
 import com.example.fantasynba.service.DateService;
 import com.example.fantasynba.service.PlayerService;
+import com.example.fantasynba.service.PlayerServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
 
@@ -29,7 +31,7 @@ public class ScrapingImpl implements Scraping{
     private final DateService dateService;
     private final StatsRepository statsRepository;
     private static final Logger LOGGER = LoggerFactory.getLogger(ScrapingImpl.class);
-    private final PlayerRepository playerRepository;
+    private final PlayerServiceImpl playerServiceImpl;
 
 
 
@@ -47,10 +49,11 @@ public class ScrapingImpl implements Scraping{
     Map<String,String> teamNames;
 
     @Override
+    @Async
     public void get_data_from_boxScores() {
         Document doc;
         try {
-            teamNames = playerService.setTeamNames();
+            //teamNames = playerServiceImpl.teamAbv;
             for (String s : boxScores){
                 doc = Jsoup.connect(s).get();
 
@@ -72,6 +75,7 @@ public class ScrapingImpl implements Scraping{
 
 
     @Override
+    @Async
     public void open_boxScore_link(Element table) {
         Iterator<Element> row = table.select("tr").iterator();
         row.next();
@@ -99,6 +103,7 @@ public class ScrapingImpl implements Scraping{
     }
 
     @Override
+    @Async
     public void process_boxScore_data(String link, String date) {
         Document doc;
         try {
@@ -120,6 +125,7 @@ public class ScrapingImpl implements Scraping{
 
 
     @Override
+    @Async
     public void process_team_data(Element e, String date) {
         Element body = e.select("tbody").first();
         for (Element row : body.select("tr")) {
@@ -132,10 +138,10 @@ public class ScrapingImpl implements Scraping{
 
     @Override
     @Transactional
+    @Async
     public void savePlayerStats(Element stat, String date) {
 
         LOGGER.debug("Saving Player stats " + date);
-        //if (stat.hasAttr("[data-stat='reason']")) return;
         try {
             String name = stat.select("[data-stat=player]").text();
 
@@ -151,11 +157,7 @@ public class ScrapingImpl implements Scraping{
             Integer tov = Integer.valueOf(stat.select("[data-stat=tov]").text());
             Player player = playerService.findPlayer(name); // null error from players no longer on team
 
-            if (player == null){
-                LOGGER.error("Player not found");
-                return;
-            }
-            //System.out.println("Name : " + name + " Date: " + date + "Team: " + player.getTeam().getName());
+            if (player == null){return;}
             PlayerStats p = PlayerStats.builder()
                     .player(player)
                     .playerName(name)
@@ -171,12 +173,10 @@ public class ScrapingImpl implements Scraping{
                     .tov(tov)
                     .build();
 
-
             statsRepository.save(p);
             player.recordPlayerStat(p);
         } catch(NumberFormatException e){
             LOGGER.warn("Player stats not found");
-
         }
     }
 
