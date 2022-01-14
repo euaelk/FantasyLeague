@@ -22,18 +22,24 @@ public class FantasyNBA {
 		SpringApplication.run(FantasyNBA.class, args);
 	}
 
-	@RequestMapping("/")
-	public String home() {
-		return "Hello Docker World";
-	}
-
-	@Bean
-	public Executor taskExecutor() {
+	@Bean(name = "threadPoolForGames")
+	public Executor taskExecutor1() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 		executor.setCorePoolSize(2);
 		executor.setMaxPoolSize(2);
 		executor.setQueueCapacity(500);
-		executor.setThreadNamePrefix("NBAScheduleLookup-");
+		executor.setThreadNamePrefix("Getting NBA Game Data Asynchronously");
+		executor.initialize();
+		return executor;
+	}
+
+	@Bean(name = "threadPoolForStats")
+	public Executor taskExecutor2() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(4);
+		executor.setMaxPoolSize(4);
+		executor.setQueueCapacity(50);
+		executor.setThreadNamePrefix("Getting NBA Stats Data Asynchronously");
 		executor.initialize();
 		return executor;
 	}
