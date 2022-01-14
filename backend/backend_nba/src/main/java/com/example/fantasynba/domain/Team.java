@@ -55,6 +55,10 @@ public class Team {
         this.oppScoreAvg = oppScoreAvg;
     }
 
+    public Team(String name){
+        this.name = name;
+    }
+
     @Override
     public boolean equals(Object o){
         if (this == o) return true;

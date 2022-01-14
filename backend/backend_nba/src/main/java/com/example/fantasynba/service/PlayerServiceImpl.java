@@ -3,11 +3,13 @@ package com.example.fantasynba.service;
 import com.example.fantasynba.domain.Player;
 import com.example.fantasynba.domain.Team;
 import com.example.fantasynba.repository.PlayerRepository;
-import com.example.fantasynba.repository.TeamRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -16,103 +18,105 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 
 @Service
 @RequiredArgsConstructor
 public class PlayerServiceImpl implements PlayerService {
 
     private final PlayerRepository playerRepository;
-    private final TeamRepository teamRepository;
+    private final TeamService teamService;
     private Map<String, String> teamLinks;
 
-    public static Map<String, String> teamAbrev;
+    public static Map<String, String> teamAbv = new HashMap<>();
 
-    @Override
-    public Map<String, String> setTeamNames(){
-        teamAbrev = new HashMap<>();
-        teamAbrev.put("Atlanta Hawks", "ATL");
-        teamAbrev.put("Boston Celtics", "BOS");
-        teamAbrev.put("Brooklyn Nets", "BRK");
-        teamAbrev.put("Charlotte Hornets", "CHO");
-        teamAbrev.put("Chicago Bulls", "CHI");
-        teamAbrev.put("Cleveland Cavaliers", "CLE");
-        teamAbrev.put("Dallas Mavericks", "DAL");
-        teamAbrev.put("Denver Nuggets", "DEN");
-        teamAbrev.put("Detroit Pistons", "DET");
-        teamAbrev.put("Golden State Warriors", "GSW");
-        teamAbrev.put("Houston Rockets", "HOU");
-        teamAbrev.put("Indiana Pacers", "IND");
-        teamAbrev.put("Los Angeles Lakers", "LAL");
-        teamAbrev.put("Los Angeles Clippers", "LAC");
-        teamAbrev.put("Memphis Grizzlies", "MEM");
-        teamAbrev.put("Miami Heat", "MIA");
-        teamAbrev.put("Milwaukee Bucks", "MIL");
-        teamAbrev.put("Minnesota Timberwolves", "MIN");
-        teamAbrev.put("New Orleans Pelicans", "NOP");
-        teamAbrev.put("New York Knicks", "NYK");
-        teamAbrev.put("Oklahoma City Thunder", "OKC");
-        teamAbrev.put("Orlando Magic", "ORL");
-        teamAbrev.put("Philadelphia 76ers", "PHI");
-        teamAbrev.put("Phoenix Suns", "PHO");
-        teamAbrev.put("Portland Trail Blazers", "POR");
-        teamAbrev.put("Sacramento Kings", "SAC");
-        teamAbrev.put("San Antonio Spurs", "SAS");
-        teamAbrev.put("Toronto Raptors", "TOR");
-        teamAbrev.put("Utah Jazz", "UTA");
-        teamAbrev.put("Washington Wizards", "WAS");
-        return teamAbrev;
+    static {
+        teamAbv.put("Atlanta Hawks", "ATL");
+        teamAbv.put("Boston Celtics", "BOS");
+        teamAbv.put("Brooklyn Nets", "BRK");
+        teamAbv.put("Charlotte Hornets", "CHO");
+        teamAbv.put("Chicago Bulls", "CHI");
+        teamAbv.put("Cleveland Cavaliers", "CLE");
+        teamAbv.put("Dallas Mavericks", "DAL");
+        teamAbv.put("Denver Nuggets", "DEN");
+        teamAbv.put("Detroit Pistons", "DET");
+        teamAbv.put("Golden State Warriors", "GSW");
+        teamAbv.put("Houston Rockets", "HOU");
+        teamAbv.put("Indiana Pacers", "IND");
+        teamAbv.put("Los Angeles Lakers", "LAL");
+        teamAbv.put("Los Angeles Clippers", "LAC");
+        teamAbv.put("Memphis Grizzlies", "MEM");
+        teamAbv.put("Miami Heat", "MIA");
+        teamAbv.put("Milwaukee Bucks", "MIL");
+        teamAbv.put("Minnesota Timberwolves", "MIN");
+        teamAbv.put("New Orleans Pelicans", "NOP");
+        teamAbv.put("New York Knicks", "NYK");
+        teamAbv.put("Oklahoma City Thunder", "OKC");
+        teamAbv.put("Orlando Magic", "ORL");
+        teamAbv.put("Philadelphia 76ers", "PHI");
+        teamAbv.put("Phoenix Suns", "PHO");
+        teamAbv.put("Portland Trail Blazers", "POR");
+        teamAbv.put("Sacramento Kings", "SAC");
+        teamAbv.put("San Antonio Spurs", "SAS");
+        teamAbv.put("Toronto Raptors", "TOR");
+        teamAbv.put("Utah Jazz", "UTA");
+        teamAbv.put("Washington Wizards", "WAS");
     }
 
 
     @Override
-    public void fetchActivePlayers()  {
+    public void fetchActivePlayers() {
         teamLinks = new HashMap<>();
-        teamAbrev = setTeamNames();
-        String pre = "https://www.basketball-reference.com/teams/";
-        String year = "/2022.html";
-
-        teamAbrev.forEach((name, abrev) -> { // ex. https://www.basketball-reference.com/teams/ + BOS + /2022.html
-            StringJoiner s = new StringJoiner(abrev);
-            s.add(pre);
-            s.add(year);
-            teamLinks.put(name, s.toString());
+        teamAbv.forEach((name, abv) -> {
+            teamLinks.put(name, String.format("https://www.basketball-reference.com/teams/%s/2022.html", abv));
         });
+        fetchPlayers();
+    }
+
+    @Override
+    public void fetchPlayers() {
+        ExecutorService executor = Executors.newFixedThreadPool(5);
+        List<CompletableFuture<Element>> asyncRosters = new ArrayList<>();
+        teamLinks.forEach((name, rosterLink) ->
+                asyncRosters.add(CompletableFuture.supplyAsync(() ->
+                        openTeamLinkThenReturnRoster(rosterLink, name), executor)));
+
+        CompletableFuture.allOf(asyncRosters.toArray(new CompletableFuture[0])).join();
+
+    }
+
+    @Override
+    public Element openTeamLinkThenReturnRoster(String rosterLink, String team)  { // supplyAsync returns CompletableFuture<Element>
+        Document doc = null;
         try {
-            fetchPlayers();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            doc = returnUrl(rosterLink).get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
         }
+        Element table = doc.getElementById("roster");
+        Element table_body = table != null ? table.select("tbody").first() : null;
+        for (Element element : table_body.select("tr")) {
+            Iterator<Element> playerInfo = element.getAllElements().iterator();
+            savePlayer(playerInfo.next(), team);
+        }
+        return table_body;
     }
 
-    @Override
-    public void fetchPlayers() throws IOException {
-
-        teamLinks.forEach((name, link) -> {
-
-            Document doc;
-            try {
-                doc = Jsoup.connect(link).get();
-                Element table = doc.getElementById("roster");
-
-                Element table_body = table != null ? table.select("tbody").first() : null;
-
-                for (Element element : table_body.select("tr")) {
-                    Iterator<Element> playerInfo = element.getAllElements().iterator();
-                    savePlayer(name, playerInfo.next());
-
-                }
-            } catch (IOException | ExecutionException | InterruptedException e) {
-                e.printStackTrace();
-            }
-
-        });
-
-    }
-
-    @Override
-    @Transactional
     @Async
-    public void savePlayer(String team, Element e) throws ExecutionException, InterruptedException {
+    public CompletableFuture<Document> returnUrl(String url) throws InterruptedException {
+        try {
+            Document doc = Jsoup.connect(url).get();
+            return CompletableFuture.completedFuture(doc);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Transactional
+    private void savePlayer(Element e, String team) {
 
         String name = e.select("[data-stat=player]").text();
         String position = e.select("[data-stat=pos]").text();
@@ -121,25 +125,19 @@ public class PlayerServiceImpl implements PlayerService {
         Integer lbs = returnInt(weight);
         String dob = e.select("[data-stat=birth_date]").text();
         String college = e.select("[data-stat=college]").text();
-        Team player_team = teamRepository.findByName(team);
+        Team player_team = teamService.findTeam(team);
 
-        Player p = asyncPlayer(name,position,height,lbs,dob,college,player_team).get();
+        Player p = buildPlayer(name,position,height,lbs,dob,college,player_team);
         Player newPlayer = playerRepository.findByName(name);
 
-        if (newPlayer == null){
+        if (newPlayer == null || !newPlayer.equals(p)){
             playerRepository.save(p);
-            teamRepository.findByName(team).addPlayer(p);
-        } else if (!newPlayer.equals(p)){
-            playerRepository.save(p);
-            teamRepository.findByName(team).addPlayer(p);
+            player_team.addPlayer(p);
         }
-
     }
 
-    @Override
-    @Async
-    public CompletableFuture<Player> asyncPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team) {
-        Player p = Player.builder()
+    private Player buildPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team) {
+       return Player.builder()
                 .name(name)
                 .position(position)
                 .height(height)
@@ -148,16 +146,16 @@ public class PlayerServiceImpl implements PlayerService {
                 .college(college)
                 .team(team)
                 .build();
-
-        return CompletableFuture.completedFuture(p);
     }
 
     @Override
+    @Transactional
     public List<Player> getAllPlayers() {
         return playerRepository.findAll();
     }
 
     @Override
+    @Transactional
     public Player findPlayer(String name) {
         return playerRepository.findByName(name);
     }

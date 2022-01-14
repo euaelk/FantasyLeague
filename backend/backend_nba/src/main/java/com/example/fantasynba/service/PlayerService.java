@@ -12,12 +12,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public interface PlayerService {
-    void fetchActivePlayers() throws IOException;
-    void fetchPlayers() throws IOException;
-    void savePlayer(String team, Element e) throws ExecutionException, InterruptedException;
-    CompletableFuture<Player> asyncPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team);
+    void fetchActivePlayers() throws Exception;
+    void fetchPlayers() throws Exception;
+    Element openTeamLinkThenReturnRoster(String rosterLink, String team) throws Exception;
     List<Player> getAllPlayers();
     Player findPlayer(String name);
     Integer returnInt(String s);
-    Map<String, String> setTeamNames();
 }

@@ -6,6 +6,7 @@ import com.example.fantasynba.repository.PlayerRepository;
 import com.example.fantasynba.repository.StatsRepository;
 import com.example.fantasynba.service.DateService;
 import com.example.fantasynba.service.PlayerService;
+import com.example.fantasynba.service.PlayerServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -29,7 +30,7 @@ public class ScrapingImpl implements Scraping{
     private final DateService dateService;
     private final StatsRepository statsRepository;
     private static final Logger LOGGER = LoggerFactory.getLogger(ScrapingImpl.class);
-    private final PlayerRepository playerRepository;
+
 
 
 
@@ -43,14 +44,13 @@ public class ScrapingImpl implements Scraping{
             "https://www.basketball-reference.com/leagues/NBA_2022_games-april.html"
     };
 
-    String visiting_team, home_team;
-    Map<String,String> teamNames;
+    private String visiting_team, home_team;
+    private Map<String,String> teamNames = PlayerServiceImpl.teamAbv;
 
     @Override
     public void get_data_from_boxScores() {
         Document doc;
         try {
-            teamNames = playerService.setTeamNames();
             for (String s : boxScores){
                 doc = Jsoup.connect(s).get();
 
