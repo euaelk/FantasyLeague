@@ -5,6 +5,7 @@ import lombok.*;
 
 import javax.persistence.*;
 
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -47,9 +48,6 @@ public class Team {
         return this.getWins() + " W | " + this.getLosses() + " L ";
     }
 
-    public Team(String name){
-        this.name = name;
-    }
 
     public Team(String name, Integer wins, Integer losses, Double winLossPer, Double scoreAvg, Double oppScoreAvg) {
         this.name = name;
@@ -69,21 +67,12 @@ public class Team {
         if (this == o) return true;
         if (!(o instanceof Team)) return false;
         Team team = (Team) o;
-        return this.name.equals(team.name) && this.wins.equals(team.wins)
-                && this.losses.equals(team.losses) && this.winLossPer.equals(team.winLossPer)
-                && this.scoreAvg.equals(team.scoreAvg) && this.oppScoreAvg.equals(team.oppScoreAvg);
+        return this.id.equals(team.id);
     }
 
     @Override
     public int hashCode() {
-        int hashCode = 1;
-        hashCode = hashCode * 37 + this.name.hashCode();
-        hashCode = hashCode * 37 + this.wins.hashCode();
-        hashCode = hashCode * 37 + this.losses.hashCode();
-        hashCode = hashCode * 37 + this.winLossPer.hashCode();
-        hashCode = hashCode * 37 + this.scoreAvg.hashCode();
-        hashCode = hashCode * 37 + this.oppScoreAvg.hashCode();
-        return hashCode;
+        return java.util.Objects.hashCode(id);
     }
 
     @Override

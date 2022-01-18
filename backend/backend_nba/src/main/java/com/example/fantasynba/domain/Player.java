@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class Player {
 
     @Id
@@ -36,16 +38,8 @@ public class Player {
     @OneToMany(mappedBy = "player", cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     @Column(nullable = true)
     @JsonManagedReference
-    private Set<PlayerStats> stats; // mappedBy targets player field in PlayerStats class
+    private List<PlayerStats> stats; // mappedBy targets player field in PlayerStats class
 
-    public Player(String name, String position, String height, Integer weight, String dob, String college) {
-        this.name = name;
-        this.position = position;
-        this.height = height;
-        this.weight = weight;
-        this.dob = dob;
-        this.college = college;
-    }
 
     public Player(String name, String position, String height, Integer weight, String dob, String college, Team team) {
         this.name = name;
@@ -67,23 +61,12 @@ public class Player {
         if (this == o) return true;
         if (!(o instanceof Player)) return false;
         Player player = (Player) o;
-        return this.name.equals(player.name) && this.position.equals(player.position)
-                && this.height.equals(player.height) && this.weight.equals(player.weight)
-                && this.dob.equals(player.dob) && this.college.equals(player.college)
-                && this.team.getName().equals(player.team.getName());
+        return this.id.equals(player.id);
     }
 
     @Override
     public int hashCode() {
-        int hashCode = 1;
-        hashCode = hashCode * 37 + this.name.hashCode();
-        hashCode = hashCode * 37 + this.position.hashCode();
-        hashCode = hashCode * 37 + this.height.hashCode();
-        hashCode = hashCode * 37 + this.weight.hashCode();
-        hashCode = hashCode * 37 + this.dob.hashCode();
-        hashCode = hashCode * 37 + this.college.hashCode();
-        hashCode = hashCode * 37 + this.team.hashCode();
-        return hashCode;
+        return java.util.Objects.hashCode(id);
     }
 
     public void recordPlayerStat(PlayerStats s){this.stats.add(s);}

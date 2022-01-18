@@ -20,6 +20,12 @@ public class Game {
     private Long id;
     private LocalDate date;
     private String time;
+    private Integer vPts;
+    private Integer hPts;
+    private String overtime;
+    private Integer attendance;
+    private String visitor_name;
+    private String home_name;
 
     @ManyToOne
     @JoinColumn(name = "visitor_fk", referencedColumnName = "team_id")
@@ -30,15 +36,6 @@ public class Game {
     @JoinColumn(name = "home_fk", referencedColumnName = "team_id")
     @JsonBackReference
     private Team home;
-
-    private Integer vPts;
-    private Integer hPts;
-    private String overtime;
-    private Integer attendance;
-
-    private String visitor_name;
-    private String home_name;
-
 
     public Game(LocalDate date, String time, Team visitor, Integer vPts, Team home, Integer hPts, String overtime, Integer attendance){
         this.date = date;
@@ -55,7 +52,7 @@ public class Game {
 
     @Override
     public boolean equals(Object o) {
-        // if (this == o) return true;
+        if (this == o) return true;
         if (!(o instanceof Game)) return false;
         Game game = (Game) o;
         return this.date.isEqual(game.date) && this.visitor.equals(game.visitor)
@@ -64,17 +61,6 @@ public class Game {
 
     @Override
     public int hashCode() {
-        int hashCode = 1;
-        hashCode = hashCode * 37 + this.date.hashCode();
-        hashCode = hashCode * 37 + this.time.hashCode();
-        hashCode = hashCode * 37 + this.visitor.hashCode();
-        hashCode = hashCode * 37 + this.vPts.hashCode();
-        hashCode = hashCode * 37 + this.hPts.hashCode();
-        hashCode = hashCode * 37 + this.home.hashCode();
-        hashCode = hashCode * 37 + this.overtime.hashCode();
-        hashCode = hashCode * 37 + this.attendance.hashCode();
-
-        return hashCode;
-
+        return java.util.Objects.hashCode(id);
     }
 }

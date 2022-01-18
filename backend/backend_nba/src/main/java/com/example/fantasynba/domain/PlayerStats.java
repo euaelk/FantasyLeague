@@ -7,6 +7,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Entity
 @Builder
@@ -19,10 +20,8 @@ public class PlayerStats implements Serializable {
 
     @Id
     private String playerName;
-
     @Id
     private LocalDate date;
-
     private Integer fg;
     private Integer fga;
     private Integer threeP; // 3P
@@ -38,14 +37,13 @@ public class PlayerStats implements Serializable {
     @JsonBackReference
     private Player player;
 
-
-
     public PlayerStats(LocalDate date, Player player){
         this.playerName = player.getName();
         this.date = date;
     }
 
-    public PlayerStats(LocalDate date, Integer fg, Integer fga, Integer threeP, Integer trb, Integer ast, Integer stl, Integer blk, Integer tov, Integer pts, Player player) {
+    public PlayerStats(LocalDate date, Integer fg, Integer fga, Integer threeP, Integer trb, Integer ast,
+                       Integer stl, Integer blk, Integer tov, Integer pts, Player player) {
         this.date = date;
         this.fg = fg;
         this.fga = fga;
@@ -81,5 +79,22 @@ public class PlayerStats implements Serializable {
                 ", tov=" + tov +
                 ", pts=" + pts +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PlayerStats that = (PlayerStats) o;
+        return Objects.equals(playerName, that.playerName)
+                && Objects.equals(date, that.date);
+    }
+
+    @Override
+    public int hashCode() {
+        int hashCode = 1;
+        hashCode = hashCode * 37 + this.playerName.hashCode();
+        hashCode = hashCode * 37 + this.date.hashCode();
+        return hashCode;
     }
 }

@@ -5,7 +5,7 @@ import org.jsoup.nodes.Element;
 import java.util.List;
 
 public interface Scraping {
-    void get_data_from_boxScores();
+    void getBoxScoreData();
     //void setTeamMatchup(Element e);
     void open_boxScore_link(Element element);
     void process_boxScore_data(String link, String date);

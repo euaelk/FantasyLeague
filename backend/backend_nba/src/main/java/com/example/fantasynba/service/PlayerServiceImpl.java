@@ -104,7 +104,6 @@ public class PlayerServiceImpl implements PlayerService {
         return table_body;
     }
 
-    @Async
     public CompletableFuture<Document> returnUrl(String url) throws InterruptedException {
         try {
             Document doc = Jsoup.connect(url).get();
@@ -130,7 +129,7 @@ public class PlayerServiceImpl implements PlayerService {
         Player p = buildPlayer(name,position,height,lbs,dob,college,player_team);
         Player newPlayer = playerRepository.findByName(name);
 
-        if (newPlayer == null || !newPlayer.equals(p)){
+        if (newPlayer == null || !newPlayer.equals(p)){ // overriding equals methods causes NPE bug
             playerRepository.save(p);
             player_team.addPlayer(p);
         }
