@@ -38,23 +38,22 @@ public class GameController {
     private final StatsRepository statsRepository;
     private final Scraping statScraper;
 
-    public String url = "https://www.basketball-reference.com/leagues/NBA_2022_games.html";
 
     @GetMapping("")
-    public ResponseEntity<List<Game>> getSeasonSchedule() throws ExecutionException, InterruptedException {
-        gameScraper.fetchGameData(url);
+    public ResponseEntity<List<Game>> getSeasonSchedule() {
+        gameScraper.fetchGameData();
         List<Game> retrievedGames = gameScraper.getAllGames();
         return new ResponseEntity<>(retrievedGames, HttpStatus.OK);
     }
 
     @GetMapping("/team")
-    public ResponseEntity<List<Team>> getNBATeams() throws IOException {
+    public ResponseEntity<List<Team>> getNBATeams() {
         teamService.nbaStandings();
         return new ResponseEntity<>(teamService.getAllTeams(), HttpStatus.OK);
     }
 
     @GetMapping("/player")
-    public ResponseEntity<List<Player>> getNBAPlayers() throws IOException, ExecutionException, InterruptedException {
+    public ResponseEntity<List<Player>> getNBAPlayers() {
         playerService.fetchActivePlayers();
         return new ResponseEntity<>(playerService.getAllPlayers(), HttpStatus.OK);
     }
@@ -90,7 +89,7 @@ public class GameController {
 
     @GetMapping("/player/stats")
     public ResponseEntity<List<PlayerStats>> getAllStatistics(){
-        statScraper.get_data_from_boxScores();
+        statScraper.getBoxScoreData();
         return new ResponseEntity<>(statsRepository.findAll(), HttpStatus.OK);
     }
 

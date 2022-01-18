@@ -12,8 +12,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public interface PlayerService {
-    void fetchActivePlayers() throws Exception;
-    void fetchPlayers() throws Exception;
+    void fetchActivePlayers();
+    void fetchPlayers();
     Element openTeamLinkThenReturnRoster(String rosterLink, String team) throws Exception;
     List<Player> getAllPlayers();
     Player findPlayer(String name);

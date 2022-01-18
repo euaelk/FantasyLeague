@@ -12,7 +12,9 @@ import java.util.concurrent.ExecutionException;
 
 public interface GameScraper {
 
-    void fetchGameData(String url) throws ExecutionException, InterruptedException;
+    void fetchGameData();
+
+    void filterMonthlyGames(String url) throws IOException;
 
     Integer stringToInt(String s);
 
@@ -22,7 +24,5 @@ public interface GameScraper {
 
     Game findGame(LocalDate date, Team visitor, Team home);
 
-    CompletableFuture<Game> createGame(LocalDate date, String time, Integer hPts,
-                                       String overtime, Integer attendance, Integer vPts,
-                                       Team visitor, Team home) throws InterruptedException;
+    Game createGame(LocalDate date, String time, Integer hPts, String overtime, Integer attendance, Integer vPts, Team visitor, Team home);
 }
