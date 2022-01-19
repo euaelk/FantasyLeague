@@ -13,16 +13,17 @@ import org.jsoup.nodes.Element;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class PlayerServiceImpl implements PlayerService {
 
@@ -30,7 +31,7 @@ public class PlayerServiceImpl implements PlayerService {
     private final TeamService teamService;
     private Map<String, String> teamLinks;
 
-    public static Map<String, String> teamAbv = new HashMap<>();
+    private static Map<String, String> teamAbv = new HashMap<>();
 
     static {
         teamAbv.put("Atlanta Hawks", "ATL");
@@ -67,6 +68,7 @@ public class PlayerServiceImpl implements PlayerService {
 
 
     @Override
+    @Async
     public void fetchActivePlayers() {
         teamLinks = new HashMap<>();
         teamAbv.forEach((name, abv) -> {
@@ -77,36 +79,22 @@ public class PlayerServiceImpl implements PlayerService {
 
     @Override
     public void fetchPlayers() {
-        ExecutorService executor = Executors.newFixedThreadPool(5);
-        List<CompletableFuture<Element>> asyncRosters = new ArrayList<>();
+//        ExecutorService executor = Executors.newFixedThreadPool(5);
+        List<CompletableFuture<Document>> asyncRosters = new ArrayList<>();
         teamLinks.forEach((name, rosterLink) ->
-                asyncRosters.add(CompletableFuture.supplyAsync(() ->
-                        openTeamLinkThenReturnRoster(rosterLink, name), executor)));
-
+                asyncRosters.add(returnFutureUrl(rosterLink, name)));
         CompletableFuture.allOf(asyncRosters.toArray(new CompletableFuture[0])).join();
-
     }
 
-    @Override
-    public Element openTeamLinkThenReturnRoster(String rosterLink, String team)  { // supplyAsync returns CompletableFuture<Element>
-        Document doc = null;
-        try {
-            doc = returnUrl(rosterLink).get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        Element table = doc.getElementById("roster");
-        Element table_body = table != null ? table.select("tbody").first() : null;
-        for (Element element : table_body.select("tr")) {
-            Iterator<Element> playerInfo = element.getAllElements().iterator();
-            savePlayer(playerInfo.next(), team);
-        }
-        return table_body;
-    }
+//    @Override
+//    public void openRoster(String roster, String team)  {
+//        returnUrl(roster, team);
+//    }
 
-    public CompletableFuture<Document> returnUrl(String url) throws InterruptedException {
+    private CompletableFuture<Document> returnFutureUrl(String url, String team) {
         try {
             Document doc = Jsoup.connect(url).get();
+            processRosterPlayerData(doc, team);
             return CompletableFuture.completedFuture(doc);
         } catch (IOException e) {
             e.printStackTrace();
@@ -114,9 +102,15 @@ public class PlayerServiceImpl implements PlayerService {
         return null;
     }
 
-    @Transactional
-    private void savePlayer(Element e, String team) {
+    private void processRosterPlayerData(Document doc, String team){
+        Element body = doc.getElementById("roster").select("tbody").first();
+        for (Element element : body.select("tr")) {
+            Iterator<Element> playerInfo = element.getAllElements().iterator();
+            savePlayer(playerInfo.next(), team);
+        }
+    }
 
+    private void savePlayer(Element e, String team) {
         String name = e.select("[data-stat=player]").text();
         String position = e.select("[data-stat=pos]").text();
         String height = e.select("[data-stat=height]").text();
@@ -127,12 +121,8 @@ public class PlayerServiceImpl implements PlayerService {
         Team player_team = teamService.findTeam(team);
 
         Player p = buildPlayer(name,position,height,lbs,dob,college,player_team);
-        Player newPlayer = playerRepository.findByName(name);
-
-        if (newPlayer == null || !newPlayer.equals(p)){ // overriding equals methods causes NPE bug
-            playerRepository.save(p);
-            player_team.addPlayer(p);
-        }
+        if (findPlayer(p.getName()) == null) { playerRepository.save(p); }
+        else if (findPlayer(p.getName()) != null && !p.equals(findPlayer(p.getName()))) { playerRepository.save(p); }
     }
 
     private Player buildPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team) {
@@ -148,13 +138,11 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    @Transactional
     public List<Player> getAllPlayers() {
         return playerRepository.findAll();
     }
 
     @Override
-    @Transactional
     public Player findPlayer(String name) {
         return playerRepository.findByName(name);
     }
@@ -170,5 +158,10 @@ public class PlayerServiceImpl implements PlayerService {
             throw new RuntimeException(err);
         }
         return weight;
+    }
+
+    @Override
+    public Map<String, String> getTeamAbv() {
+        return teamAbv;
     }
 }

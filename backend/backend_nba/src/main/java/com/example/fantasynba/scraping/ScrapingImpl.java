@@ -2,23 +2,22 @@ package com.example.fantasynba.scraping;
 
 import com.example.fantasynba.domain.Player;
 import com.example.fantasynba.domain.PlayerStats;
-import com.example.fantasynba.repository.PlayerRepository;
 import com.example.fantasynba.repository.StatsRepository;
 import com.example.fantasynba.service.DateService;
 import com.example.fantasynba.service.PlayerService;
-import com.example.fantasynba.service.PlayerServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
-
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -29,6 +28,7 @@ public class ScrapingImpl implements Scraping{
     private final PlayerService playerService;
     private final DateService dateService;
     private final StatsRepository statsRepository;
+    private String visiting_team, home_team;
     private static final Logger LOGGER = LoggerFactory.getLogger(ScrapingImpl.class);
 
     static String[] boxScores = {
@@ -41,17 +41,15 @@ public class ScrapingImpl implements Scraping{
             "https://www.basketball-reference.com/leagues/NBA_2022_games-april.html"
     };
 
-    private String visiting_team, home_team;
-    private Map<String,String> teamNames = PlayerServiceImpl.teamAbv;
-
     @Override
+    @Async
     public void getBoxScoreData() {
         Document doc;
         try {
             for (String s : boxScores){
                 doc = Jsoup.connect(s).get();
-                Element table_container = doc.getElementById("schedule"); // passing in table of games
-                if (table_container != null) { open_boxScore_link(table_container);}
+                Element table = doc.getElementById("schedule"); // passing in table of games
+                if (table != null) { processBoxScore(table);}
             }
         } catch (IOException e){
             throw new RuntimeException(e);
@@ -59,31 +57,31 @@ public class ScrapingImpl implements Scraping{
     }
 
     @Override
-    public void open_boxScore_link(Element table) {
+    public void processBoxScore(Element table) {
         Iterator<Element> row = table.select("tr").iterator();
         row.next();
         while (row.hasNext()){
             Iterator<Element> tr_children = row.next().getAllElements().iterator();
             Element column_data = tr_children.next();
             String game_date = column_data.select("[data-stat=date_game]").text();
-            visiting_team = teamNames.get(column_data.select("[data-stat=visitor_team_name]").text());
-            home_team = teamNames.get(column_data.select("[data-stat=home_team_name]").text());
+            visiting_team = playerService.getTeamAbv().get(column_data.select("[data-stat=visitor_team_name]").text());
+            home_team = playerService.getTeamAbv().get(column_data.select("[data-stat=home_team_name]").text());
             Element box_score_node = column_data.select("[data-stat=box_score_text]").select("a").first();
             if (box_score_node == null) return;
 
-            process_boxScore_data(box_score_node.attr("abs:href"), game_date);
+            processEastAndWest(box_score_node.attr("abs:href"), game_date);
         }
     }
 
     @Override
-    public void process_boxScore_data(String link, String date) {
+    public void processEastAndWest(String link, String date) {
         Document doc;
         try {
             doc = Jsoup.connect(link).get(); // open box score
             Element away_team_box_score = doc.getElementById(String.format("all_box-%s-game-basic", visiting_team));
             Element home_team_box_score = doc.getElementById(String.format("all_box-%s-game-basic", home_team));
-            if (away_team_box_score != null) {process_team_data(away_team_box_score, date);}
-            if (home_team_box_score != null) {process_team_data(home_team_box_score, date);}
+            if (away_team_box_score != null) {processTeamData(away_team_box_score, date);}
+            if (home_team_box_score != null) {processTeamData(home_team_box_score, date);}
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -91,7 +89,7 @@ public class ScrapingImpl implements Scraping{
     }
 
     @Override
-    public void process_team_data(Element e, String date) {
+    public void processTeamData(Element e, String date) {
         Element body = e.select("tbody").first();
         for (Element row : body.select("tr")) {
             if (row.hasAttr("class"))
@@ -103,7 +101,6 @@ public class ScrapingImpl implements Scraping{
     @Override
     @Transactional
     public void savePlayerStats(Element stat, String date) {
-        LOGGER.debug("Saving Player stats " + date);
         try {
             String name = stat.select("[data-stat=player]").text();
             LocalDate game_date = dateService.getDateFromString(date);
@@ -118,10 +115,6 @@ public class ScrapingImpl implements Scraping{
             Integer tov = Integer.valueOf(stat.select("[data-stat=tov]").text());
             Player player = playerService.findPlayer(name); // null error from players no longer on team
 
-            if (player == null){
-                LOGGER.error("Player not found");
-                return;
-            }
             PlayerStats p = statsBuilder(player, game_date, fieldGoal, fgA, three, pts, trb, ast, stl, blk, tov);
             statsRepository.save(p);
             player.recordPlayerStat(p);

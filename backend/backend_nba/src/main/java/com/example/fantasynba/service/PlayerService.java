@@ -14,8 +14,8 @@ import java.util.concurrent.ExecutionException;
 public interface PlayerService {
     void fetchActivePlayers();
     void fetchPlayers();
-    Element openTeamLinkThenReturnRoster(String rosterLink, String team) throws Exception;
     List<Player> getAllPlayers();
     Player findPlayer(String name);
     Integer returnInt(String s);
+    Map<String, String> getTeamAbv();
 }

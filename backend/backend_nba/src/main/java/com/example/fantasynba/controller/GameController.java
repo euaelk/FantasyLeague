@@ -38,7 +38,6 @@ public class GameController {
     private final StatsRepository statsRepository;
     private final Scraping statScraper;
 
-
     @GetMapping("")
     public ResponseEntity<List<Game>> getSeasonSchedule() {
         teamService.nbaStandings();
