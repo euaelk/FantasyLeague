@@ -48,7 +48,6 @@ public class GameScraperImpl implements GameScraper {
     }
 
     @Override
-    @Async
     public void filterMonthlyGames(final String websiteUrl) throws IOException {
         Document doc = Jsoup.connect(websiteUrl).get();
         Element filter = doc.getElementsByClass("filter").first();
@@ -60,7 +59,6 @@ public class GameScraperImpl implements GameScraper {
         }
     }
 
-    @Async
     public CompletableFuture<Document> returnUrl(String url)  {
         try {
             Document doc = Jsoup.connect(url).get();

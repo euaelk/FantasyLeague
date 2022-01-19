@@ -57,7 +57,6 @@ public class TeamServiceImpl implements TeamService{
     public void updateStandings(Element conf) {
         Element table = conf.select("table").first();
         Iterator<Element> tr = table.select("tr").iterator();
-
         tr.next();
         while(tr.hasNext()){
             Iterator<Element> team = tr.next().getAllElements().iterator();
@@ -88,29 +87,23 @@ public class TeamServiceImpl implements TeamService{
     @Transactional
     public List<Team> getAllTeams() {
         transactionTemplate = new TransactionTemplate(transactionManager);
-        List<Team> teams = transactionTemplate.execute(status -> {
+        return transactionTemplate.execute(status -> {
             return teamRepository.findAll();
         });
-        return teams;
     }
 
     @Override
     @Transactional
     public Team findTeam(String name) {
         transactionTemplate = new TransactionTemplate(transactionManager);
-        Team team = transactionTemplate.execute(status -> {
+        return transactionTemplate.execute(status -> {
             return teamRepository.findByName(name);
         });
-        return team;
     }
 
     @Override
     @Transactional
     public List<Game> getTeamGames(String team_name) {
-//        Team team_games = teamRepository.findByName(team);
-//        List<Game> games = new ArrayList<>();
-//        team_games.getAwayGames().forEach(g -> games.add(g));
-//        return games;
         transactionTemplate = new TransactionTemplate(transactionManager);
         List<Game> games = transactionTemplate.execute(status -> {
             Team team = teamRepository.findByName(team_name);
