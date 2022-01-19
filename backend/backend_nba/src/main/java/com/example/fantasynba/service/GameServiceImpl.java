@@ -14,11 +14,7 @@ import java.util.concurrent.Future;
 @RequiredArgsConstructor
 public class GameServiceImpl implements GameService{
 
-
-
-
     @Override
-    @Async
     public Future<Game> saveNewGame(GameRequest game) {
         System.out.println("Execute method asynchronously" + Thread.currentThread().getName());
         Game g = Game.builder()
