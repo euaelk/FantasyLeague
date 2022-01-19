@@ -41,14 +41,13 @@ public class GameController {
 
     @GetMapping("")
     public ResponseEntity<List<Game>> getSeasonSchedule() {
+        teamService.nbaStandings();
         gameScraper.fetchGameData();
-        List<Game> retrievedGames = gameScraper.getAllGames();
-        return new ResponseEntity<>(retrievedGames, HttpStatus.OK);
+        return new ResponseEntity<>(gameScraper.getAllGames(), HttpStatus.OK);
     }
 
     @GetMapping("/team")
     public ResponseEntity<List<Team>> getNBATeams() {
-        teamService.nbaStandings();
         return new ResponseEntity<>(teamService.getAllTeams(), HttpStatus.OK);
     }
 
