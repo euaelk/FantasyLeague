@@ -16,6 +16,9 @@ public interface PlayerService {
     void fetchPlayers();
     List<Player> getAllPlayers();
     Player findPlayer(String name);
+    Player buildPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team);
     Integer returnInt(String s);
     Map<String, String> getTeamAbv();
+    void savePlayerDB(Player p);
+    void fillPlayerInfo(Element e, String team);
 }

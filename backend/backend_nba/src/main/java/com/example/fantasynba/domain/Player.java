@@ -16,7 +16,6 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Player {
 
     @Id
@@ -38,7 +37,7 @@ public class Player {
     @OneToMany(mappedBy = "player", cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     @Column(nullable = true)
     @JsonManagedReference
-    private List<PlayerStats> stats; // mappedBy targets player field in PlayerStats class
+    private Set<PlayerStats> stats; // mappedBy targets player field in PlayerStats class
 
 
     public Player(String name, String position, String height, Integer weight, String dob, String college, Team team) {
@@ -51,6 +50,10 @@ public class Player {
         this.team = team;
     }
 
+    public Player(String name){
+        this.name = name;
+    }
+
     @Override
     public String toString(){
         return "Player [id = " + id + ", name = " + name + " ]";
@@ -61,7 +64,10 @@ public class Player {
         if (this == o) return true;
         if (!(o instanceof Player)) return false;
         Player player = (Player) o;
-        return this.id.equals(player.id);
+        return Objects.equals(this.name, player.name) && Objects.equals(this.position, player.position)
+                && Objects.equals(this.height, player.height) && Objects.equals(this.weight, player.weight)
+                && Objects.equals(this.dob, player.dob) && Objects.equals(this.college, player.college)
+                && Objects.equals(this.team, player.team);
     }
 
     @Override

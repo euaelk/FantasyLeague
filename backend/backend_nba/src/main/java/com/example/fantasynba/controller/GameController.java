@@ -56,6 +56,11 @@ public class GameController {
         return new ResponseEntity<>(playerService.getAllPlayers(), HttpStatus.OK);
     }
 
+    @GetMapping("/allPlayers")
+    public ResponseEntity<List<Player>> getAllPlayers() {
+        return new ResponseEntity<>(playerService.getAllPlayers(), HttpStatus.OK);
+    }
+
     @GetMapping("/games")
     @ResponseBody
     public ResponseEntity<List<Game>> getAllGames(){
