@@ -71,46 +71,42 @@ public class PlayerServiceImpl implements PlayerService {
     @Async
     public void fetchActivePlayers() {
         teamLinks = new HashMap<>();
+        final String rosterSite = "https://www.basketball-reference.com/teams/%s/2022.html";
         teamAbv.forEach((name, abv) -> {
-            teamLinks.put(name, String.format("https://www.basketball-reference.com/teams/%s/2022.html", abv));
+            teamLinks.put(name, String.format(rosterSite, abv));
         });
         fetchPlayers();
     }
 
     @Override
     public void fetchPlayers() {
-//        ExecutorService executor = Executors.newFixedThreadPool(5);
         List<CompletableFuture<Document>> asyncRosters = new ArrayList<>();
         teamLinks.forEach((name, rosterLink) ->
-                asyncRosters.add(returnFutureUrl(rosterLink, name)));
+                asyncRosters.add(CompletableFuture.supplyAsync(() -> returnFutureUrl(rosterLink, name))));
         CompletableFuture.allOf(asyncRosters.toArray(new CompletableFuture[0])).join();
     }
 
-//    @Override
-//    public void openRoster(String roster, String team)  {
-//        returnUrl(roster, team);
-//    }
-
-    private CompletableFuture<Document> returnFutureUrl(String url, String team) {
+    private Document returnFutureUrl(String url, String team) {
+        Document doc = null;
         try {
-            Document doc = Jsoup.connect(url).get();
+            doc = Jsoup.connect(url).get();
             processRosterPlayerData(doc, team);
-            return CompletableFuture.completedFuture(doc);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return doc;
     }
 
     private void processRosterPlayerData(Document doc, String team){
         Element body = doc.getElementById("roster").select("tbody").first();
         for (Element element : body.select("tr")) {
             Iterator<Element> playerInfo = element.getAllElements().iterator();
-            savePlayer(playerInfo.next(), team);
+            fillPlayerInfo(playerInfo.next(), team);
         }
     }
 
-    private void savePlayer(Element e, String team) {
+    @Override
+    public void fillPlayerInfo(Element e, String team) {
         String name = e.select("[data-stat=player]").text();
         String position = e.select("[data-stat=pos]").text();
         String height = e.select("[data-stat=height]").text();
@@ -120,12 +116,15 @@ public class PlayerServiceImpl implements PlayerService {
         String college = e.select("[data-stat=college]").text();
         Team player_team = teamService.findTeam(team);
 
+        Player playerExists = findPlayer(name);
         Player p = buildPlayer(name,position,height,lbs,dob,college,player_team);
-        if (findPlayer(p.getName()) == null) { playerRepository.save(p); }
-        else if (findPlayer(p.getName()) != null && !p.equals(findPlayer(p.getName()))) { playerRepository.save(p); }
+        if (playerExists == null) { savePlayerDB(p); }
+        else if (!p.equals(playerExists)) { savePlayerDB(p); }
+
     }
 
-    private Player buildPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team) {
+    @Override
+    public Player buildPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team) {
        return Player.builder()
                 .name(name)
                 .position(position)
@@ -135,6 +134,11 @@ public class PlayerServiceImpl implements PlayerService {
                 .college(college)
                 .team(team)
                 .build();
+    }
+
+    @Override
+    public void savePlayerDB(Player p){
+        playerRepository.save(p);
     }
 
     @Override

@@ -58,8 +58,6 @@ public class PlayerStats implements Serializable {
         this.playerName = player.getName();
     }
 
-
-
     public Double fantasyPoints(){
         return (this.pts * 1) + (this.trb * 1.2) + (this.ast * 1.5) + (this.stl * 3) + (this.blk * 3) - (this.tov * 1)
                 -(this.fga * .5) + (this.threeP * 2) + (this.fg * 1);
@@ -85,9 +83,9 @@ public class PlayerStats implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        PlayerStats that = (PlayerStats) o;
-        return Objects.equals(playerName, that.playerName)
-                && Objects.equals(date, that.date);
+        PlayerStats player = (PlayerStats) o;
+        return Objects.equals(playerName, player.playerName)
+                && Objects.equals(date, player.date);
     }
 
     @Override
