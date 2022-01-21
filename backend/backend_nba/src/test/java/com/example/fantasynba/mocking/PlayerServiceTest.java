@@ -7,6 +7,8 @@ import com.example.fantasynba.service.TeamService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import java.util.concurrent.CompletableFuture;
@@ -23,6 +25,7 @@ public class PlayerServiceTest {
     private PlayerServiceImpl playerService;
     private TeamService teamService;
     private PlayerRepository playerRepository;
+    private static final Logger logger = LoggerFactory.getLogger(PlayerServiceTest.class);
 
     @Before
     public void setup(){
@@ -59,9 +62,20 @@ public class PlayerServiceTest {
 
     @Test
     public void supplySync_StringTest() throws ExecutionException, InterruptedException {
-        CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> "Hello");
+        long start = System.currentTimeMillis();
+
+        CompletableFuture<String> c1 = CompletableFuture.supplyAsync(() -> "Hello");
+        CompletableFuture<String> c2 = CompletableFuture.supplyAsync(() -> "Hello");
+        CompletableFuture<String> c3 = CompletableFuture.supplyAsync(() -> "Hello");
+
         // lamda function creating Future instance of 'Hello'
-        assertEquals("Hello", future.get());
+        CompletableFuture.allOf(c1, c2, c3).join();
+
+        logger.info("Elapsed time: " + (System.currentTimeMillis() - start));
+        logger.info("--> " + c1.get());
+        logger.info("--> " + c2.get());
+        logger.info("--> " + c3.get());
+
     }
 
     @Test
