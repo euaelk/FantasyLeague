@@ -5,7 +5,6 @@ import com.example.fantasynba.domain.PlayerStats;
 import com.example.fantasynba.repository.StatsRepository;
 import com.example.fantasynba.service.DateService;
 import com.example.fantasynba.service.PlayerService;
-import jdk.internal.org.jline.reader.Completer;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -100,8 +99,7 @@ public class ScrapingImpl implements Scraping{
         return CompletableFuture.completedFuture(doc);
     }
 
-    @Override
-    public void processTeamData(Element e, String date) {
+    private void processTeamData(Element e, String date) {
         Element body = e.select("tbody").first();
         for (Element row : body.select("tr")) {
             if (row.hasAttr("class"))
@@ -110,8 +108,7 @@ public class ScrapingImpl implements Scraping{
         }
     }
 
-    @Override
-    public void savePlayerStats(Element stat, String date) {
+    private void savePlayerStats(Element stat, String date) {
         if (stat.hasAttr("[data-stat='reason']"))
             return;
         try {

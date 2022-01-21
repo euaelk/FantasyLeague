@@ -2,6 +2,7 @@ package com.example.fantasynba.service;
 
 import com.example.fantasynba.domain.Game;
 import com.example.fantasynba.domain.Team;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.io.IOException;
@@ -12,9 +13,13 @@ import java.util.concurrent.ExecutionException;
 
 public interface GameScraper {
 
-    void fetchGameData();
+    void fetchGameData(String month);
 
-    void filterMonthlyGames(String url) throws IOException;
+    List<String> setScheduleOfGamesByMonth(String url) throws IOException;
+
+    void openGamesForThisMonth(String url);
+
+    void processSchedule(Document doc) throws IOException, InterruptedException, ExecutionException;
 
     Integer stringToInt(String s);
 

@@ -16,9 +16,6 @@ import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-
-
 
 @Service
 @Transactional
@@ -28,55 +25,44 @@ public class GameScraperImpl implements GameScraper {
     private final GameRepository gameRepository;
     private final DateService dateService;
     private final TeamRepository teamRepository;
-    static Map<String, String> schedule;
 
     @Override
     @Async
-    public void fetchGameData() {
-        schedule = new HashMap<>();
-        try {
-            filterMonthlyGames("https://www.basketball-reference.com/leagues/NBA_2022_games.html");
-            for (String s : schedule.values()){
-                CompletableFuture<Document> cf = returnUrl(s);
-                CompletableFuture<Void> processFuture = cf
-                        .thenAccept(f -> processSchedule(f));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+    public void fetchGameData(String month) {
+        openGamesForThisMonth(month);
     }
 
     @Override
-    public void filterMonthlyGames(final String websiteUrl) throws IOException {
+    public List<String> setScheduleOfGamesByMonth(String websiteUrl) throws IOException {
+        List<String> schedule = new ArrayList<>();
+        String refSite = "https://www.basketball-reference.com/leagues/NBA_2022_games-%s.html";
         Document doc = Jsoup.connect(websiteUrl).get();
         Element filter = doc.getElementsByClass("filter").first();
         Elements links = filter.getElementsByTag("a");
-        for (Element link : links){
-            String linkHref = link.attr("href");
-            String month = link.text();
-            schedule.put(month, websiteUrl.concat(linkHref));
-        }
+        links.stream()
+                .map(link -> link.text().toLowerCase())
+                .forEach(month -> schedule.add(String.format(refSite, month)));
+        return schedule;
     }
 
-    public CompletableFuture<Document> returnUrl(String url)  {
+    @Override
+    public void openGamesForThisMonth(String url)  {
+        Document doc;
         try {
-            Document doc = Jsoup.connect(url).get();
-            return CompletableFuture.completedFuture(doc);
+            doc = Jsoup.connect(url).get();
+            processSchedule(doc);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
     }
 
-    private void processSchedule(Document doc){
+    @Override
+    public void processSchedule(Document doc)  {
         Element table = doc.getElementById("schedule");
-        Iterator<Element> row = table != null ? table.select("tr").iterator() : null;
-        row.next(); // skip <th>
-        while (row.hasNext()){
-            Iterator<Element> game = row.next().getAllElements().iterator();
-            gameDataFromHtml(game.next());
-        }
+        Element body = table.select("tbody").first();
+        Elements games = body.select("tr");
+        games.stream().filter(p -> !p.hasAttr(".thead"))
+                .forEach(e -> gameDataFromHtml(e));
     }
 
     @Override
@@ -93,7 +79,8 @@ public class GameScraperImpl implements GameScraper {
         Game g = createGame(date, time, hPts, overtime, attendance, vPts, visitor, home);
         Game game_duplicate = findGame(date, visitor, home);
 
-        if (game_duplicate == null || !game_duplicate.equals(g)) { gameRepository.save(g); }
+        if (game_duplicate != null && game_duplicate.equals(g)) { return; }
+        else { gameRepository.save(g); }
 
     }
 

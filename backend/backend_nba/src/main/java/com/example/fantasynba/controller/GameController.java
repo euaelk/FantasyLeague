@@ -10,6 +10,8 @@ import com.example.fantasynba.repository.StatsRepository;
 import com.example.fantasynba.scraping.Scraping;
 import com.example.fantasynba.service.*;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -17,10 +19,13 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
 
 
+import javax.sound.midi.SysexMessage;
 import java.io.IOException;
 import java.time.LocalDate;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @CrossOrigin(origins = "http://localhost:8090")
@@ -37,11 +42,12 @@ public class GameController {
     private final TeamService teamService;
     private final StatsRepository statsRepository;
     private final Scraping statScraper;
+    private static final Logger logger = LoggerFactory.getLogger(GameController.class);
 
     @GetMapping("")
-    public ResponseEntity<List<Game>> getSeasonSchedule() {
+    public ResponseEntity<List<Game>> getSeasonSchedule() throws IOException {
         teamService.nbaStandings();
-        gameScraper.fetchGameData();
+        //gameScraper.fetchGameData();
         return new ResponseEntity<>(gameScraper.getAllGames(), HttpStatus.OK);
     }
 
@@ -61,11 +67,21 @@ public class GameController {
         return new ResponseEntity<>(playerService.getAllPlayers(), HttpStatus.OK);
     }
 
+    @GetMapping("/allGames")
+    public ResponseEntity<List<Game>> getGames() {
+        return new ResponseEntity<>(gameRepository.findAll(), HttpStatus.OK);
+    }
+
     @GetMapping("/games")
-    @ResponseBody
-    public ResponseEntity<List<Game>> getAllGames(){
-        List<Game> games = gameScraper.getAllGames();
-        return new ResponseEntity<>(games, HttpStatus.OK);
+    public void getAllGames() throws IOException, ExecutionException, InterruptedException {
+        long start = System.currentTimeMillis();
+        String ballRefUrl = "https://www.basketball-reference.com/leagues/NBA_2022_games.html";
+        List<String> games = gameScraper.setScheduleOfGamesByMonth(ballRefUrl); // have links for each month
+        for (String link : games){
+            gameScraper.fetchGameData(link);
+        }
+        logger.info("Elapsed time: " + (System.currentTimeMillis() - start));
+
     }
 
     @GetMapping("/games/date")

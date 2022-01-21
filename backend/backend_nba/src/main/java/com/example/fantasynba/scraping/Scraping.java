@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public interface Scraping {
-//    void getBoxScoreData();
+    void getBoxScoreData();
 //    String processBoxScore(Document document);
 //    CompletableFuture<Document> processEastAndWest(String link, String date);
-    void processTeamData(Element e, String date);
-    void savePlayerStats(Element stat, String date);
+//    void processTeamData(Element e, String date);
+
     Integer stringToInt(String s);
 }
