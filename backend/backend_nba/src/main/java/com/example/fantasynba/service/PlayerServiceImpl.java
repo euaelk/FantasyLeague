@@ -17,9 +17,6 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 @Service
@@ -68,33 +65,26 @@ public class PlayerServiceImpl implements PlayerService {
 
 
     @Override
-    @Async
-    public void fetchActivePlayers() {
+    public Map<String, String> fetchTeamRosterLinks() {
         teamLinks = new HashMap<>();
-        final String rosterSite = "https://www.basketball-reference.com/teams/%s/2022.html";
+        String rosterSite = "https://www.basketball-reference.com/teams/%s/2022.html";
         teamAbv.forEach((name, abv) -> {
             teamLinks.put(name, String.format(rosterSite, abv));
         });
-        fetchPlayers();
+        return getTeamLinks();
     }
+
 
     @Override
-    public void fetchPlayers() {
-        List<CompletableFuture<Document>> asyncRosters = new ArrayList<>();
-        teamLinks.forEach((name, rosterLink) ->
-                asyncRosters.add(CompletableFuture.supplyAsync(() -> returnFutureUrl(rosterLink, name))));
-        CompletableFuture.allOf(asyncRosters.toArray(new CompletableFuture[0])).join();
-    }
-
-    private Document returnFutureUrl(String url, String team) {
-        Document doc = null;
+    @Async
+    public void fetchPlayerData(String url, String team) {
+        Document doc;
         try {
             doc = Jsoup.connect(url).get();
             processRosterPlayerData(doc, team);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return doc;
     }
 
     private void processRosterPlayerData(Document doc, String team){
@@ -105,8 +95,8 @@ public class PlayerServiceImpl implements PlayerService {
         }
     }
 
-    @Override
-    public void fillPlayerInfo(Element e, String team) {
+
+    private void fillPlayerInfo(Element e, String team) {
         String name = e.select("[data-stat=player]").text();
         String position = e.select("[data-stat=pos]").text();
         String height = e.select("[data-stat=height]").text();
@@ -123,8 +113,7 @@ public class PlayerServiceImpl implements PlayerService {
 
     }
 
-    @Override
-    public Player buildPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team) {
+    private Player buildPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team) {
        return Player.builder()
                 .name(name)
                 .position(position)
@@ -167,5 +156,10 @@ public class PlayerServiceImpl implements PlayerService {
     @Override
     public Map<String, String> getTeamAbv() {
         return teamAbv;
+    }
+
+    @Override
+    public Map<String, String> getTeamLinks() {
+        return teamLinks;
     }
 }
