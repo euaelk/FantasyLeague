@@ -84,6 +84,17 @@
 			<version>1.16.2</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.mock-server</groupId>
+			<artifactId>mockserver-netty</artifactId>
+			<version>5.11.1</version>
+			<type>jar-with-dependencies</type>
+		</dependency>
+		<dependency>
+			<groupId>org.mock-server</groupId>
+			<artifactId>mockserver-junit-jupiter</artifactId>
+			<version>5.11.1</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -110,6 +121,33 @@
 								com.example.fantasynba.FantasyNBA
 							</mainClass>
 						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.mock-server</groupId>
+				<artifactId>mockserver-maven-plugin</artifactId>
+				<version>5.11.1</version>
+				<configuration>
+					<serverPort>1080</serverPort>
+					<logLevel>DEBUG</logLevel>
+					<initializationClass>org.mockserver.maven.ExampleInitializationClass</initializationClass>
+				</configuration>
+				<executions>
+					<execution>
+						<id>process-test-classes</id>
+						<phase>process-test-classes</phase>
+						<goals>
+							<goal>start</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>verify</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>stop</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>
