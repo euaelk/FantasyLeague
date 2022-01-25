@@ -11,13 +11,19 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import org.springframework.hateoas.mediatype.alps.Doc;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
 
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 
 @Service
@@ -30,6 +36,7 @@ public class ScrapingImpl implements Scraping{
     private final StatsRepository statsRepository;
     private String visiting_team, home_team;
     private static String date;
+    private static List<Element> players;
 
     static String[] boxScores = {
             "https://www.basketball-reference.com/leagues/NBA_2022_games-october.html",
@@ -42,40 +49,40 @@ public class ScrapingImpl implements Scraping{
     };
 
     @Override
-    public void getBoxScoreData(String boxScore) {
-        openFutureGames(boxScore);
+    public void getBoxScoreData() {
+        Arrays.stream(this.getBoxScores()).forEach(link -> openFutureGames(link));
     }
 
     @Override
-    @Async
-    public void openFutureGames(String url) { // DRY Principle
+    @Async("exec1")
+    public CompletableFuture<String> openFutureGames(String url) { // connect to each month
         Document doc;
         try {
             doc = Jsoup.connect(url).get();
-            System.out.println("Opening url : " + url);
-            //processBoxScore(doc);
+            processBoxScore(doc);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return new AsyncResult<>(url).completable();
     }
 
-    private void processBoxScore(Document doc)  {
+    private void processBoxScore(Document doc)  { // get schedule for the month, pass in each game as a 'tr' element
         Element body = doc.getElementById("schedule").select("tbody").first();
         Elements games = body.select("tr");
         games.stream().filter(p -> !p.hasAttr(".thead")).forEach(e -> futureScoreLink(e));
     }
 
-    private void futureScoreLink(Element game) { // potentially return the link here to chain the cfs together ?
+    private void futureScoreLink(Element game) { // get date, visitor/home teams of each game
         date = game.select("[data-stat=date_game]").text(); // formerly game_date
         visiting_team = playerService.getTeamAbv().get(game.select("[data-stat=visitor_team_name]").text());
         home_team = playerService.getTeamAbv().get(game.select("[data-stat=home_team_name]").text());
-
-        Element box_score_node = game.select("[data-stat=box_score_text]").select("a").first();
-        processEastAndWest(box_score_node.attr("abs:href"), date);
+        Element box = game.select("[data-stat=box_score_text]").select("a").first();
+        if (box != null) processVisitorHome(box.attr("abs:href"), date);
+        else return;
     }
 
 
-    private void processEastAndWest(String link, String date) { // turn date global ??
+    private void processVisitorHome(String link, String date) { // separate visitor/home box scores
         Document doc;
         try {
             doc = Jsoup.connect(link).get();
@@ -88,14 +95,13 @@ public class ScrapingImpl implements Scraping{
         }
     }
 
-    private void processTeamData(Element boxscore, String date) { //
+    private void processTeamData(Element boxscore, String date) { // pass in player rows to start saving stats. Takes 29ms
         Elements players = boxscore.select("tbody").select("tr");
-        players.stream().filter(p -> !p.hasAttr("class")).forEach(e -> savePlayerStats(e, date));
+        players.stream().filter(p -> !p.hasAttr("class")).forEach(s -> scrapeStats(s, date));
     }
 
-    private void savePlayerStats(Element stat, String date) {
-        if (stat.hasAttr("[data-stat='reason']"))
-            return;
+    public void scrapeStats(Element stat, String date)  {
+        if (stat.hasAttr("[data-stat='reason']")) return;
 
         String name = stat.select("[data-stat=player]").text();
         LocalDate game_date = dateService.getDateFromString(date);
@@ -109,18 +115,23 @@ public class ScrapingImpl implements Scraping{
         Integer blk = stringConversion(stat.select("[data-stat=blk]").text());
         Integer tov = stringConversion(stat.select("[data-stat=tov]").text());
 
-        Player player = playerService.findPlayer(name);
-        if (player == null){return;}
+        Player player = null;
+        PlayerStats p = null;
+        try {
+            player = playerService.findPlayer(name);
+            p = statsBuilder(player, game_date, fieldGoal, fgA, three, pts, trb, ast, stl, blk, tov);
 
-        PlayerStats p = statsBuilder(player, game_date, fieldGoal, fgA, three, pts, trb, ast, stl, blk, tov);
-        statsRepository.save(p);
-        player.recordPlayerStat(p);
-
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            statsRepository.save(p);
+            player.recordPlayerStat(p);
+        }
     }
 
     private PlayerStats statsBuilder(Player player, LocalDate date, Integer fg, Integer fga, Integer threeP,
                                      Integer pts, Integer trb, Integer ast, Integer stl, Integer blk, Integer tov){
-        return PlayerStats.builder()
+        PlayerStats s = PlayerStats.builder()
                 .player(player)
                 .playerName(player.getName())
                 .date(date)
@@ -134,6 +145,8 @@ public class ScrapingImpl implements Scraping{
                 .stl(stl)
                 .tov(tov)
                 .build();
+
+        return s;
     }
 
     @Override
@@ -154,5 +167,9 @@ public class ScrapingImpl implements Scraping{
     @Override
     public String[] getBoxScores() {
         return boxScores;
+    }
+
+    public List<Element> getPlayers(){
+        return players;
     }
 }

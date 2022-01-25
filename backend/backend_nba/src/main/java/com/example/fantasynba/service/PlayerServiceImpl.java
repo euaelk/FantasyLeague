@@ -106,11 +106,15 @@ public class PlayerServiceImpl implements PlayerService {
         String college = e.select("[data-stat=college]").text();
         Team player_team = teamService.findTeam(team);
 
-        Player playerExists = findPlayer(name);
+        Player playerExists;
         Player p = buildPlayer(name,position,height,lbs,dob,college,player_team);
-        if (playerExists == null) { savePlayerDB(p); }
-        else if (!p.equals(playerExists)) { savePlayerDB(p); }
 
+        try {
+            playerExists = findPlayer(name);
+            if (!p.equals(playerExists)) savePlayerDB(p);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     private Player buildPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team) {
@@ -136,8 +140,9 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public Player findPlayer(String name) {
-        return playerRepository.findByName(name);
+    public Player findPlayer(String name) throws Exception {
+        Player p = playerRepository.findByName(name);
+        return Optional.of(p).orElseThrow(() -> new Exception("Player not found"));
     }
 
     @Override

@@ -35,7 +35,7 @@ public class PlayerServiceTest {
     }
 
     @Test
-    public void findPlayerMethod_Test(){
+    public void findPlayerMethod_Test() throws Exception {
         Player player = new Player();
         player.setName("Kevin Durant");
         player.setDob("April 1 1992");

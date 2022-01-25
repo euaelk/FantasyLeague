@@ -9,6 +9,7 @@ import com.example.fantasynba.repository.StatsRepository;
 import com.example.fantasynba.scraping.Scraping;
 import com.example.fantasynba.service.*;
 import lombok.RequiredArgsConstructor;
+import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,8 +18,13 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 
 @CrossOrigin(origins = "http://localhost:8090")
@@ -65,10 +71,15 @@ public class GameController {
     }
 
     @GetMapping("/player/stats")
-    public void getAllStatistics() throws IOException {
+    public void getAllStatistics() throws ExecutionException, InterruptedException, IOException {
+        long start = System.currentTimeMillis();
+        List<CompletableFuture<String>> futures = new ArrayList<>();
         String[] boxScores = statScraper.getBoxScores();
         for (String s : boxScores)
-            statScraper.getBoxScoreData(s);
+            futures.add(statScraper.openFutureGames(s));
+
+        logger.info("Elapsed time: " + (System.currentTimeMillis() - start));
+
     }
 
     @GetMapping("/team/all")
@@ -110,7 +121,7 @@ public class GameController {
     }
 
     @GetMapping("/player/{name}")
-    public ResponseEntity<Player> getPlayer(@PathVariable String name){
+    public ResponseEntity<Player> getPlayer(@PathVariable String name) throws Exception {
         return new ResponseEntity<>(playerService.findPlayer(name), HttpStatus.OK);
     }
 

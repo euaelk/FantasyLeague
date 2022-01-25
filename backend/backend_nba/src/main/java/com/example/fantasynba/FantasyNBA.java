@@ -18,13 +18,22 @@ public class FantasyNBA {
 		SpringApplication.run(FantasyNBA.class, args);
 	}
 
-	@Bean
+	@Bean(name = "exec1")
 	public Executor taskExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-		executor.setCorePoolSize(2);
-		executor.setMaxPoolSize(2);
-		executor.setQueueCapacity(500);
-		executor.setThreadNamePrefix("NBA Games Lookup");
+		executor.setCorePoolSize(4);
+		executor.setMaxPoolSize(4);
+		executor.setThreadNamePrefix("NBA lookup");
+		executor.initialize();
+		return executor;
+	}
+
+	@Bean(name = "exec2")
+	public Executor taskExecutor2() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(4);
+		executor.setMaxPoolSize(4);
+		executor.setThreadNamePrefix("NBA stats lookup");
 		executor.initialize();
 		return executor;
 	}

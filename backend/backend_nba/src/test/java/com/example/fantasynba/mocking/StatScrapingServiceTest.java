@@ -3,21 +3,11 @@ package com.example.fantasynba.mocking;
 import com.example.fantasynba.repository.PlayerRepository;
 import com.example.fantasynba.repository.StatsRepository;
 import com.example.fantasynba.scraping.Scraping;
-import com.example.fantasynba.service.PlayerServiceImpl;
-import com.example.fantasynba.service.TeamServiceImpl;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.io.IOException;
-import java.util.Arrays;
 
 import static org.mockito.Mockito.mock;
 
@@ -38,7 +28,7 @@ public class StatScrapingServiceTest {
     }
 
     @Test
-    public void createDocument() {
+    public void testDocument() {
 
     }
 

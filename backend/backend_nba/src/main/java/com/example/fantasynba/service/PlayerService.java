@@ -15,7 +15,7 @@ public interface PlayerService {
     Map<String, String> fetchTeamRosterLinks();
     void fetchPlayerData(String url, String team);
     List<Player> getAllPlayers();
-    Player findPlayer(String name);
+    Player findPlayer(String name) throws Exception;
     Integer returnInt(String s);
     Map<String, String> getTeamAbv();
     Map<String, String> getTeamLinks();
