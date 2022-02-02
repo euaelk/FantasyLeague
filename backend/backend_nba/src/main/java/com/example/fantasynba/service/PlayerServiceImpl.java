@@ -28,7 +28,7 @@ public class PlayerServiceImpl implements PlayerService {
     private final TeamService teamService;
     private Map<String, String> teamLinks;
 
-    private static Map<String, String> teamAbv = new HashMap<>();
+    private static final Map<String, String> teamAbv = new HashMap<>();
 
     static {
         teamAbv.put("Atlanta Hawks", "ATL");
@@ -78,13 +78,15 @@ public class PlayerServiceImpl implements PlayerService {
     @Override
     @Async
     public void fetchPlayerData(String url, String team) {
-        Document doc;
+        Document doc = null;
         try {
             doc = Jsoup.connect(url).get();
-            processRosterPlayerData(doc, team);
+        } catch (final java.net.SocketTimeoutException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        processRosterPlayerData(doc, team);
     }
 
     private void processRosterPlayerData(Document doc, String team){
@@ -106,15 +108,9 @@ public class PlayerServiceImpl implements PlayerService {
         String college = e.select("[data-stat=college]").text();
         Team player_team = teamService.findTeam(team);
 
-        Player playerExists;
         Player p = buildPlayer(name,position,height,lbs,dob,college,player_team);
+        if (!findPlayerAlreadyExists(p, name)) savePlayerDB(p);
 
-        try {
-            playerExists = findPlayer(name);
-            if (!p.equals(playerExists)) savePlayerDB(p);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
     }
 
     private Player buildPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team) {
@@ -130,8 +126,15 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public void savePlayerDB(Player p){
-        playerRepository.save(p);
+    public Player savePlayerDB(Player p){
+        return playerRepository.save(p);
+    }
+
+    @Override
+    public Player getPlayer(String name) {
+        boolean playerExists = playerRepository.findByName(name).isPresent();
+        Player player = playerExists ? playerRepository.findByName(name).get() : null;
+        return player;
     }
 
     @Override
@@ -140,22 +143,15 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public Player findPlayer(String name) throws Exception {
-        Player p = playerRepository.findByName(name);
-        return Optional.of(p).orElseThrow(() -> new Exception("Player not found"));
+    public boolean findPlayerAlreadyExists(Player player, String name) {
+        if (!playerRepository.findByName(name).isPresent()) savePlayerDB(player); // insert players that are not in DB
+        return playerRepository.findByName(name).get().equals(player); // checks for identical players
     }
 
     @Override
-    public Integer returnInt(String s) {
-        int weight;
-        if (s.isEmpty())
-            return -1;
-        try {
-            weight = Integer.parseInt(s);
-        } catch (NumberFormatException err) {
-            throw new RuntimeException(err);
-        }
-        return weight;
+    public Integer returnInt(String s) throws NumberFormatException {
+        if (s.isEmpty()) return -1;
+        return Integer.parseInt(s);
     }
 
     @Override
