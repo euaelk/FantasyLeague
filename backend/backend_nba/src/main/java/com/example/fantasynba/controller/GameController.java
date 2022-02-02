@@ -9,9 +9,7 @@ import com.example.fantasynba.repository.StatsRepository;
 import com.example.fantasynba.scraping.Scraping;
 import com.example.fantasynba.service.*;
 import lombok.RequiredArgsConstructor;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,13 +19,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 
 @CrossOrigin(origins = "http://localhost:8090")
@@ -74,18 +67,14 @@ public class GameController {
     }
 
     @GetMapping("/player/stats")
-    public ResponseEntity<List<PlayerStats>> getAllStatistics() throws ExecutionException, InterruptedException {
-        String[] boxScores = statScraper.getBoxScores();
-
-        List<Document> docs = new ArrayList<>();
-        for (String month : boxScores){
-            docs.add(statScraper.openFutureGames(month));
-        }
+    public ResponseEntity<List<PlayerStats>> getAllStatistics()  {
+        List<Document> docs = statScraper.openFutureGames();
         for (Document d : docs){
             Elements schedule = statScraper.getListOfBoxScores(d);
             Map<String, String> games = statScraper.getScoresByDate(schedule);
-            games.forEach(statScraper::processVisitorHome);
+            games.forEach(statScraper::processVisitorHome); // async needs to be called from outside the class
         }
+
         return new ResponseEntity<>(statsRepository.findAll(), HttpStatus.OK);
     }
 

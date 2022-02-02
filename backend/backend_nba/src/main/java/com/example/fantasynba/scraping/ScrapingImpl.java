@@ -37,19 +37,20 @@ public class ScrapingImpl implements Scraping{
             "https://www.basketball-reference.com/leagues/NBA_2022_games-april.html"
     };
 
-    @Override
-    public void getBoxScoreData() {Arrays.stream(this.getBoxScores()).forEach(this::openFutureGames);}
-
 
     @Override
-    public Document openFutureGames(String url) {
-        Document doc = null;
-        try {
-            doc = Jsoup.connect(url).get();
-        } catch (IOException e) {
-            e.printStackTrace();
+    public List<Document> openFutureGames() {
+        Document doc;
+        List<Document> docs = new ArrayList<>();
+        for (String s : boxScores) {
+            try {
+                doc = Jsoup.connect(s).get();
+                docs.add(doc);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        return doc;
+        return docs;
     }
 
     @Override
@@ -66,7 +67,6 @@ public class ScrapingImpl implements Scraping{
             Element box = game.select("[data-stat=box_score_text]").select("a").first();
             if (box == null) break;
             game_dates.put(box.attr("abs:href"), date);
-
         }
         return game_dates;
     }
