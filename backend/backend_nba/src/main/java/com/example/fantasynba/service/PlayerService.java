@@ -15,9 +15,10 @@ public interface PlayerService {
     Map<String, String> fetchTeamRosterLinks();
     void fetchPlayerData(String url, String team);
     List<Player> getAllPlayers();
-    Player findPlayer(String name) throws Exception;
+    boolean findPlayerAlreadyExists(Player player, String name);
     Integer returnInt(String s);
     Map<String, String> getTeamAbv();
     Map<String, String> getTeamLinks();
-    void savePlayerDB(Player p);
+    Player savePlayerDB(Player p);
+    Player getPlayer(String name);
 }
