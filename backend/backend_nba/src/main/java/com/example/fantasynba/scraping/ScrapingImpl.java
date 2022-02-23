@@ -78,7 +78,7 @@ public class ScrapingImpl implements Scraping{
         Element awayScore = null;
         Element homeScore = null;
         try {
-            doc = Jsoup.connect(link).get();
+            doc = Jsoup.connect(link).newRequest().get(); // will run out of memory w/o creating a new request at each exec.
             String visiting_team = playerService.getTeamAbv().get(doc.getElementsByClass("scorebox").first()
                     .select("strong").get(0).select("a").text());
 

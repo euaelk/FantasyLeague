@@ -78,18 +78,11 @@ public class PlayerServiceImpl implements PlayerService {
     @Override
     @Async
     public void fetchPlayerData(String url, String team) {
-        Document doc = null;
-        try {
-            doc = Jsoup.connect(url).get();
-        } catch (final java.net.SocketTimeoutException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Document doc = getDocument(url);
         processRosterPlayerData(doc, team);
     }
 
-    private void processRosterPlayerData(Document doc, String team){
+    public void processRosterPlayerData(Document doc, String team){
         Element body = doc.getElementById("roster").select("tbody").first();
         for (Element element : body.select("tr")) {
             Iterator<Element> playerInfo = element.getAllElements().iterator();
@@ -98,7 +91,7 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
 
-    private void fillPlayerInfo(Element e, String team) {
+    public void fillPlayerInfo(Element e, String team) {
         String name = e.select("[data-stat=player]").text();
         String position = e.select("[data-stat=pos]").text();
         String height = e.select("[data-stat=height]").text();
@@ -108,12 +101,17 @@ public class PlayerServiceImpl implements PlayerService {
         String college = e.select("[data-stat=college]").text();
         Team player_team = teamService.findTeam(team);
 
-        Player p = buildPlayer(name,position,height,lbs,dob,college,player_team);
+        String playerUrl = e.select("[data-stat=player]").select("a").attr("abs:href");
+        String imageUrl = getDocument(playerUrl).getElementById("meta")
+                .select("div.media-item").select("img").attr("abs:src");
+
+        Player p = buildPlayer(name,position,height,lbs,dob,college,imageUrl,player_team);
         if (!findPlayerAlreadyExists(p, name)) savePlayerDB(p);
 
     }
 
-    private Player buildPlayer(String name, String position, String height, Integer lbs, String dob, String college, Team team) {
+    public Player buildPlayer(String name, String position, String height, Integer lbs, String dob,
+                               String college, String imageUrl, Team team) {
        return Player.builder()
                 .name(name)
                 .position(position)
@@ -121,6 +119,7 @@ public class PlayerServiceImpl implements PlayerService {
                 .weight(lbs)
                 .dob(dob)
                 .college(college)
+               .imageUrl(imageUrl)
                 .team(team)
                 .build();
     }
@@ -135,6 +134,17 @@ public class PlayerServiceImpl implements PlayerService {
         boolean playerExists = playerRepository.findByName(name).isPresent();
         Player player = playerExists ? playerRepository.findByName(name).get() : null;
         return player;
+    }
+
+    @Override
+    public Document getDocument(String url) {
+        Document doc = null;
+        try {
+            doc = Jsoup.connect(url).get();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return doc;
     }
 
     @Override

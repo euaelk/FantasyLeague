@@ -13,9 +13,8 @@ import java.util.concurrent.ExecutionException;
 
 public interface GameScraper {
 
-    void fetchGameData(String month);
 
-    List<String> setScheduleOfGamesByMonth(String url) throws IOException;
+    void fetchAllGames(String url) throws IOException;
 
     void openGamesForThisMonth(String url);
 

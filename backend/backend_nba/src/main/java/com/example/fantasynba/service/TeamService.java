@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 public interface TeamService {
     void nbaStandings() throws IOException;
     void updateStandings(Element table);
-    CompletableFuture<Team> saveTeam(Element team);
+    void saveTeam(Element team);
     List<Team> getAllTeams();
     Team findTeam(String name);
     List<Game> getTeamGames(String team);

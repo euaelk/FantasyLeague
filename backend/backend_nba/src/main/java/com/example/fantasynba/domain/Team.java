@@ -27,6 +27,7 @@ public class Team {
     private Double winLossPer;
     private Double scoreAvg;
     private Double oppScoreAvg;
+    private String teamLogo;
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     @Column(nullable = true)
@@ -49,13 +50,14 @@ public class Team {
     }
 
 
-    public Team(String name, Integer wins, Integer losses, Double winLossPer, Double scoreAvg, Double oppScoreAvg) {
+    public Team(String name, Integer wins, Integer losses, Double winLossPer, Double scoreAvg, Double oppScoreAvg, String teamLogo) {
         this.name = name;
         this.wins = wins;
         this.losses = losses;
         this.winLossPer = winLossPer;
         this.scoreAvg = scoreAvg;
         this.oppScoreAvg = oppScoreAvg;
+        this.teamLogo = teamLogo;
     }
 
     public Team(String name){
