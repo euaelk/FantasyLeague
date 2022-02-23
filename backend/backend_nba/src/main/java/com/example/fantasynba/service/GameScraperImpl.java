@@ -26,14 +26,10 @@ public class GameScraperImpl implements GameScraper {
     private final DateService dateService;
     private final TeamRepository teamRepository;
 
-    @Override
-    @Async
-    public void fetchGameData(String month) {
-        openGamesForThisMonth(month);
-    }
 
     @Override
-    public List<String> setScheduleOfGamesByMonth(String websiteUrl) throws IOException {
+    @Async
+    public void fetchAllGames(String websiteUrl) throws IOException {
         List<String> schedule = new ArrayList<>();
         String refSite = "https://www.basketball-reference.com/leagues/NBA_2022_games-%s.html";
         Document doc = Jsoup.connect(websiteUrl).get();
@@ -42,7 +38,7 @@ public class GameScraperImpl implements GameScraper {
         links.stream()
                 .map(link -> link.text().toLowerCase())
                 .forEach(month -> schedule.add(String.format(refSite, month)));
-        return schedule;
+        schedule.forEach(month -> openGamesForThisMonth(month));
     }
 
     @Override

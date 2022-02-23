@@ -2,6 +2,7 @@ package com.example.fantasynba.service;
 
 import com.example.fantasynba.domain.Player;
 import com.example.fantasynba.domain.Team;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.io.IOException;
@@ -21,4 +22,5 @@ public interface PlayerService {
     Map<String, String> getTeamLinks();
     Player savePlayerDB(Player p);
     Player getPlayer(String name);
+    Document getDocument(String url);
 }

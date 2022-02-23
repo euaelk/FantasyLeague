@@ -28,6 +28,7 @@ public class Player {
     private Integer weight;
     private String dob; // birthdate
     private String college;
+    private String imageUrl;
 
     @ManyToOne
     @JoinColumn(name = "team_fk", referencedColumnName = "team_id")
@@ -40,13 +41,14 @@ public class Player {
     private Set<PlayerStats> stats; // mappedBy targets player field in PlayerStats class
 
 
-    public Player(String name, String position, String height, Integer weight, String dob, String college, Team team) {
+    public Player(String name, String position, String height, Integer weight, String dob, String college, String imageUrl, Team team) {
         this.name = name;
         this.position = position;
         this.height = height;
         this.weight = weight;
         this.dob = dob;
         this.college = college;
+        this.imageUrl = imageUrl;
         this.team = team;
     }
 
@@ -76,4 +78,8 @@ public class Player {
     }
 
     public void recordPlayerStat(PlayerStats s){this.stats.add(s);}
+
+    public void setImageUrl(String url){
+        this.imageUrl = url;
+    }
 }

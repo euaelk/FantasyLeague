@@ -32,9 +32,9 @@ public class FantasyNBA {
 	@Bean(name = "pool2")
 	public Executor taskExecutor2() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-		executor.setCorePoolSize(4);
-		executor.setMaxPoolSize(4);
-		executor.setQueueCapacity(100);
+		executor.setCorePoolSize(2);
+		executor.setMaxPoolSize(2);
+		executor.setQueueCapacity(500);
 		executor.setThreadNamePrefix("NBA stats lookup");
 		executor.initialize();
 		return executor;
